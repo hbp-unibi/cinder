@@ -32,12 +32,9 @@
 namespace cinder {
 TEST(lif, cur_exp)
 {
-	std::ofstream os("lif_cur_exp.csv");
 	DormandPrinceIntegrator integrator;
-	CSVRecorder recorder(os);
+	NullRecorder recorder;
 	NullController controller;
-
-	// List containing the recorded spike times
 	std::vector<Time> spikes;
 
 	// Create a linear integrate and fire neuron with a current based synapse
@@ -53,17 +50,14 @@ TEST(lif, cur_exp)
 
 TEST(lif, cond_exp)
 {
-	std::ofstream os("lif_cond_exp.csv");
 	DormandPrinceIntegrator integrator;
-	CSVRecorder recorder(os);
+	NullRecorder recorder;
 	NullController controller;
-
-	// List containing the recorded spike times
 	std::vector<Time> spikes;
 
 	// Create a linear integrate and fire neuron with a current based synapse
 	auto current_source = make_current_source(
-	    CondExp(50_nS, 5_ms, 0_V, {10_ms, 30_ms, 40_ms, 50_ms, 100_ms, 200_ms,
+	    CondExp(0.5_uS, 5_ms, 0_V, {10_ms, 30_ms, 40_ms, 50_ms, 100_ms, 200_ms,
 	                          202_ms, 204_ms, 206_ms, 208_ms}));
 	auto neuron = make_neuron<LIF>(current_source,
 	                               [&spikes](Time t) { spikes.push_back(t); });

@@ -296,21 +296,21 @@ private:
 	/*
 	 * Compile-time recursive implementation of current.
 	 */
-	template <typename State2, typename System, size_t Offs>
-	static Current current_impl(const State2 &, const System &)
+	template <typename State2, typename System, size_t I, size_t Offs>
+	Current current_impl(const State2 &, const System &) const
 	{
 		return Current(0.0);
 	}
 
-	template <typename State2, typename System, size_t Offs, typename T0,
+	template <typename State2, typename System, size_t I, size_t Offs, typename T0,
 	          typename... Ts>
-	static Current current_impl(const State2 &s, const System &sys)
+	Current current_impl(const State2 &s, const System &sys) const
 	{
 		using InnerState = typename T0::State;
 		static constexpr size_t InnerSize = InnerState::size();
 
-		return Current(s[Offs]) +
-		       current_impl<State2, System, Offs + InnerSize, Ts...>(s, sys);
+		return std::get<I>(instances).current(s.template view<InnerSize, Offs>(), sys) +
+		       current_impl<State2, System, I + 1, Offs + InnerSize, Ts...>(s, sys);
 	}
 
 public:
@@ -367,9 +367,9 @@ public:
 	 * Retrieves the current from the given state vector.
 	 */
 	template <typename State2, typename System>
-	static Current current(const State2 &s, const System &sys)
+	Current current(const State2 &s, const System &sys) const
 	{
-		return current_impl<State2, System, 0, T...>(s, sys);
+		return current_impl<State2, System, 0, 0, T...>(s, sys);
 	}
 };
 

@@ -80,7 +80,7 @@ public:
 	{
 		// Calculate the current depending on the channel conductance and the
 		// current voltage
-		return s[0] * (sys.ode().voltage(sys.s()) - m_e_rev);
+		return Current(s[0] * (m_e_rev - sys.ode().voltage(sys.s(), sys)).v());
 	}
 };
 }
