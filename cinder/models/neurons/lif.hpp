@@ -32,36 +32,55 @@
 #include <cinder/models/neuron.hpp>
 
 namespace cinder {
-
+/**
+ * The LIFState class is the state vector which represents the state of the
+ * LIF membrane.
+ */
 struct LIFState : public VectorBase<LIFState, Real, 1> {
 	using VectorBase<LIFState, Real, 1>::VectorBase;
 };
 
+/**
+ * LIFParameters is the parameter vector which contains the state of the LIF
+ * membrane.
+ */
 struct LIFParameters : public VectorBase<LIFParameters, Real, 7> {
 	using VectorBase<LIFParameters, Real, 7>::VectorBase;
 
+	/**
+	 * Default constructor. Initializes the neuron to the values also used in
+	 * PyNN.
+	 */
 	LIFParameters()
 	{
-		cM(1_nF);
-		gL(2_uS);
-		eTh(-54_mV);
-		eRest(-70_mV);
-		eReset(-80_mV);
-		eSpike(20_mV);
-		tauRef(1_ms);
+		cm(1_nF);
+		tau_m(20_ms);
+		v_thresh(-50_mV);
+		v_rest(-65_mV);
+		v_reset(-65_mV);
+		v_spike(20_mV);
+		tau_refrac(0.1_ms);
 	}
 
-	TYPED_VECTOR_ELEMENT(cM, 0, Capacitance);
-	TYPED_VECTOR_ELEMENT(gL, 1, Conductance);
-	TYPED_VECTOR_ELEMENT(eTh, 2, Voltage);
-	TYPED_VECTOR_ELEMENT(eRest, 3, Voltage);
-	TYPED_VECTOR_ELEMENT(eReset, 4, Voltage);
-	TYPED_VECTOR_ELEMENT(eSpike, 5, Voltage);
-	TYPED_VECTOR_ELEMENT(tauRef, 6, RealTime);
+	TYPED_VECTOR_ELEMENT(cm, 0, Capacitance);
+	TYPED_VECTOR_ELEMENT(g_leak, 1, Conductance);
+	TYPED_VECTOR_ELEMENT(v_thresh, 2, Voltage);
+	TYPED_VECTOR_ELEMENT(v_rest, 3, Voltage);
+	TYPED_VECTOR_ELEMENT(v_reset, 4, Voltage);
+	TYPED_VECTOR_ELEMENT(v_spike, 5, Voltage);
+	TYPED_VECTOR_ELEMENT(tau_refrac, 6, RealTime);
+
+	LIFParameters &tau_m(RealTime t)
+	{
+		g_leak(Conductance(cm().v() / t.v()));
+		return *this;
+	}
+
+	RealTime tau_m() const { return RealTime(cm().v() / g_leak().v()); }
 };
 
 template <typename SpikeCallback_>
-class LIF: public MembraneBase<LIFState, LIFParameters, SpikeCallback_> {
+class LIF : public MembraneBase<LIFState, LIFParameters, SpikeCallback_> {
 private:
 	using Base = MembraneBase<LIFState, LIFParameters, SpikeCallback_>;
 	Time m_ref_end = MAX_TIME;
@@ -71,21 +90,16 @@ public:
 	using Base::p;
 	using Base::emit_spike;
 
-	LIFState s0() const {
-		return LIFState({p().eRest()});
-	}
+	LIFState s0() const { return LIFState({p().v_rest()}); }
 
 	/**
 	 * Returns the time at which the refractory period will end.
 	 */
-	Time next_discontinuity(Time t) const
-	{
-		return t >= m_ref_end ? MAX_TIME : m_ref_end;
-	}
-
+	Time next_discontinuity(Time) const { return m_ref_end; }
 
 	template <typename State, typename System>
-	void handle_discontinuity(Time t, State &, System &) {
+	void handle_discontinuity(Time t, State &, System &)
+	{
 		if (t >= m_ref_end) {
 			m_ref_end = MAX_TIME;
 		}
@@ -97,16 +111,16 @@ public:
 	template <typename State, typename System>
 	void update(Time t, State &s, System &sys)
 	{
-		if (s[0] > p().eTh()) {
+		if (s[0] > p().v_thresh()) {
 			// Plan the end of the refractory period
-			m_ref_end = t + Time::sec(p().tauRef());
+			m_ref_end = t + Time::sec(p().tau_refrac());
 
 			// Set the membrane potential to the spike potential
-			s[0] = p().eSpike();
+			s[0] = p().v_spike();
 			sys.recorder().record(t, sys.s(), sys);
 
 			// Set the membrane potential to the reset potential
-			s[0] = p().eReset();
+			s[0] = p().v_reset();
 			emit_spike(t);
 		}
 	}
@@ -116,9 +130,10 @@ public:
 	{
 		if (m_ref_end == MAX_TIME) {
 			const Current i_syn{sys.ode().current(s, sys)};
-			const Current i_rest{(p().eRest() - s[0]) * p().gL()};
-			return LIFState({(i_rest + i_syn) / p().cM()});
-		} else {
+			const Current i_rest{(p().v_rest() - s[0]) * p().g_leak()};
+			return LIFState({(i_rest + i_syn) / p().cm()});
+		}
+		else {
 			return LIFState({0});
 		}
 	}
