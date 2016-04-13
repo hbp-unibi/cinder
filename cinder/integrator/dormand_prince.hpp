@@ -189,7 +189,7 @@ public:
 	 *
 	 * @param err is the target integration error.
 	 */
-	AdaptiveIntegratorBase(Real eTar = 0.1e-3) : invETar(1.0 / eTar)
+	AdaptiveIntegratorBase(Real eTar = 0.01e-6) : invETar(1.0 / eTar)
 	{
 		reset();
 	}
