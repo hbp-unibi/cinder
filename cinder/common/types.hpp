@@ -63,21 +63,41 @@ using sx_double_t = long double;
  */
 using sx_int_t = unsigned long long int;
 
+/**
+ * The quantity type is a class wrapper for any C++ numerical type. This allows
+ * to specialise numerical types, which is useful when encoding units in the
+ * type system.
+ */
 template <typename Impl, typename T>
 struct Quantity {
 private:
 	using Self = Quantity<Impl, T>;
 
+	/**
+	 * The actual value stored in this instance.
+	 */
 	T m_val;
 
 public:
+	/**
+	 * Default constructor. Default-initializes the encapsulated value.
+	 */
 	constexpr Quantity() : m_val(T()) {}
 
+	/**
+	 * Creates a new instance of Quantity for the given value.
+	 */
 	explicit constexpr Quantity(T val) : m_val(val) {}
 
+	/**
+	 * Allows to implicitly convert Quantity to the underlying value type.
+	 */
 	operator T() const { return m_val; }
 
 	T v() const { return m_val; }
+
+	friend Time operator+(const Self &q) { return Time(q.v()); }
+	friend Impl operator-(const Self &q) { return Impl(-q.v()); }
 
 	friend Impl operator+(const Self &q1, const Self &q2)
 	{
@@ -93,8 +113,6 @@ public:
 	{
 		return T(q1.v() / q2.v());
 	}
-
-	friend Impl operator-(const Self &q) { return Impl(-q.v()); }
 
 	friend Impl operator/(const Self &q, T s) { return Impl(q.v() / s); }
 	friend Impl operator*(const Self &q, T s) { return Impl(q.v() * s); }
