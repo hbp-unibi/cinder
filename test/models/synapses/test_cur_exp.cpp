@@ -51,7 +51,7 @@ struct CurExpTestRecorder {
 	bool check_near_discontinuity(Time t, const std::vector<Spike> &spikes)
 	{
 		for (const Spike &spike : spikes) {
-			if ((t - spike.t).abs() < 1_ms) {
+			if (std::abs(t - spike.t) < 1_ms) {
 				return true;
 			}
 		}

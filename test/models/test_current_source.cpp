@@ -49,7 +49,7 @@ struct StepCurrentTestRecorder {
 	template <typename State, typename System>
 	static void record(Time t, const State &s, const System &sys)
 	{
-		if ((t - 100_ms).abs() > 0.1_ms && (t - 900_ms).abs() > 0.1_ms) {
+		if (std::abs(t - 100_ms) > 0.1_ms && std::abs(t - 900_ms) > 0.1_ms) {
 			EXPECT_NEAR((t > 100_ms && t < 900_ms) ? 10e-3 : 0.0,
 			            sys.ode().current(s, sys), 1e-6);
 		}
@@ -60,7 +60,7 @@ struct MultiCurrentTestRecorder {
 	template <typename State, typename System>
 	static void record(Time t, const State &s, const System &sys)
 	{
-		if ((t - 100_ms).abs() > 0.1_ms && (t - 900_ms).abs() > 0.1_ms) {
+		if (std::abs(t - 100_ms) > 0.1_ms && std::abs(t - 900_ms) > 0.1_ms) {
 			EXPECT_NEAR((t > 100_ms && t < 900_ms) ? 10e-3 : -10e-3,
 			            sys.ode().current(s, sys), 1e-6);
 		}

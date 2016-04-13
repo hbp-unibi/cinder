@@ -287,5 +287,12 @@ constexpr double MIN_TIME_DELTA = TIME_TO_SEC;
 
 }
 
+namespace std {
+/**
+ * Overload for allowing to apply std::abs to the Time type.
+ */
+inline cinder::Time abs(cinder::Time t) { return (t.t < 0) ? -t : t; }
+}
+
 #endif /* CINDER_COMMON_TIME_HPP */
 
