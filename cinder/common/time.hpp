@@ -211,15 +211,53 @@ public:
 	}
 };
 
-static constexpr Time operator"" _s(long double t) { return Time::sec(t); }
+static constexpr Time operator"" _s(long double t)
+{
+	return Time::sec(t * 1e0);
+}
 static constexpr Time operator"" _s(unsigned long long int t)
 {
-	return Time::sec(t);
+	return Time::sec(t * 1e0);
 }
-static constexpr Time operator"" _ms(long double t) { return Time::msec(t); }
+static constexpr Time operator"" _ms(long double t)
+{
+	return Time::sec(t * 1e-3);
+}
 static constexpr Time operator"" _ms(unsigned long long int t)
 {
-	return Time::msec(t);
+	return Time::sec(t * 1e-3);
+}
+static constexpr Time operator"" _us(long double t)
+{
+	return Time::sec(t * 1e-6);
+}
+static constexpr Time operator"" _us(unsigned long long int t)
+{
+	return Time::sec(t * 1e-6);
+}
+static constexpr Time operator"" _ns(long double t)
+{
+	return Time::sec(t * 1e-9);
+}
+static constexpr Time operator"" _ns(unsigned long long int t)
+{
+	return Time::sec(t * 1e-9);
+}
+static constexpr Time operator"" _ps(long double t)
+{
+	return Time::sec(t * 1e-12);
+}
+static constexpr Time operator"" _ps(unsigned long long int t)
+{
+	return Time::sec(t * 1e-12);
+}
+static constexpr Time operator"" _fs(long double t)
+{
+	return Time::sec(t * 1e-15);
+}
+static constexpr Time operator"" _fs(unsigned long long int t)
+{
+	return Time::sec(t * 1e-15);
 }
 
 /**
