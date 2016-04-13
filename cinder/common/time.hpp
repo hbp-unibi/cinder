@@ -16,6 +16,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file time.hpp
+ *
+ * Contains the definition of the Time type. To avoid non-uniform resolution in
+ * Time deltas -- as it would occur with floating point values for time -- the
+ * Time type is implemented as a 64-bit integer with fixed point arithmetic.
+ * Time can be converted to the RealTime type from types.hpp, which is a
+ * floating point time type.
+ *
+ * @author Andreas Stöckel
+ */
+
 #pragma once
 
 #ifndef CINDER_COMMON_TIME_HPP
@@ -54,9 +66,15 @@ constexpr TimeType MAX_INT_TIME = std::numeric_limits<TimeType>::max();
 constexpr TimeType MIN_INT_TIME = std::numeric_limits<TimeType>::min();
 
 /**
- * Time is the type used for storing time values. Times are stored as a 32 bit
- * integer in microsecond resolution (with fixed divisor 2^10). This is done to
- * avoid artifacts by shifting precision over time.
+ * Time is the type used for storing time values. Times are stored as a 64 bit
+ * integer in with fixed divisor 2^48. This is done to avoid artifacts, e.g.
+ * when calculating time deltas, where the resolution would decrease with
+ * increasing time for floating point values. This header also defines a set
+ * of suffixes, which allow to create time values with the corresponding SI
+ * suffixes.
+ *
+ * @seealso RealTime a floating-point version of Time. Time can be implicitly
+ * converted to RealTime, but not vice-versa.
  */
 struct Time {
 private:
@@ -78,7 +96,7 @@ private:
 
 public:
 	/**
-	 * Internal Time value.
+	 * Internal fixed-point integer Time value.
 	 */
 	TimeType t;
 
@@ -93,6 +111,10 @@ public:
 	 *
 	 * @param t is the internal integer time the Time instance should be
 	 * initialized to.
+	 * @seealso Time::sec creates a new Time instance from a floating point
+	 * value which denotes a time in seconds.
+	 * @seealso Time::msec creates a new Time instance from a floating point
+	 * value which denotes a time in milliseconds.
 	 */
 	explicit constexpr Time(TimeType t) : t(t) {}
 
@@ -110,10 +132,8 @@ public:
 	 */
 	static constexpr Time msec(double t)
 	{
-		return Time(secondsToTimeType(t / 1000.0));
+		return Time(secondsToTimeType(t * 1e-3));
 	}
-
-	Time abs() const { return Time(t >= 0 ? t : -t); }
 
 	/**
 	 * Converts the internal integer Time to a floating point time in seconds.
@@ -125,78 +145,66 @@ public:
 	/* Operators */
 
 	friend Time operator+(const Time &t1) { return Time(t1.t); }
-
 	friend Time operator-(const Time &t1) { return Time(-t1.t); }
-
 	friend Time operator+(const Time &t1, const Time &t2)
 	{
 		return Time(t1.t + t2.t);
 	}
-
 	friend Time operator-(const Time &t1, const Time &t2)
 	{
 		return Time(t1.t - t2.t);
 	}
-
-	friend Time operator/(const Time &t1, const Time &t2)
+	friend Time operator/(const Time &t, double s)
 	{
-		return Time(t1.t / t2.t);
+		return Time(t.t / s);
 	}
-
 	friend Time operator*(const Time &t, double s)
 	{
 		return Time(TimeType(t.t * s));
 	}
-
 	friend Time operator*(double s, const Time &t)
 	{
 		return Time(TimeType(s * t.t));
 	}
-
-	friend Time operator*(const Time &t1, const Time &t2)
-	{
-		return Time(t1.t * t2.t);
-	}
-
 	friend Time operator%(const Time &t1, const Time &t2)
 	{
 		return Time(t1.t % t2.t);
 	}
-
 	friend void operator+=(Time &t1, const Time &t2) { t1.t += t2.t; }
-
 	friend void operator-=(Time &t1, const Time &t2) { t1.t -= t2.t; }
-
+	friend void operator*=(Time &t, double s) { t.t *= s; }
+	friend void operator/=(Time &t, double s) { t.t /= s; }
 	friend bool operator==(const Time &t1, const Time &t2)
 	{
 		return t1.t == t2.t;
 	}
-
 	friend bool operator!=(const Time &t1, const Time &t2)
 	{
 		return t1.t != t2.t;
 	}
-
 	friend bool operator<(const Time &t1, const Time &t2)
 	{
 		return t1.t < t2.t;
 	}
-
 	friend bool operator<=(const Time &t1, const Time &t2)
 	{
 		return t1.t <= t2.t;
 	}
-
 	friend bool operator>(const Time &t1, const Time &t2)
 	{
 		return t1.t > t2.t;
 	}
-
 	friend bool operator>=(const Time &t1, const Time &t2)
 	{
 		return t1.t >= t2.t;
 	}
 
+	/**
+	 * Prints the time in seconds to the given output stream.
+	 *
+	 * @param os is the outuput stream to which the time value should be written.
+	 * @param t is the time value that should be printed.
+	 */
 	friend std::ostream &operator<<(std::ostream &os, const Time &t)
 	{
 		return os << t.sec();
