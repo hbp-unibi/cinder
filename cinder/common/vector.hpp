@@ -41,94 +41,150 @@
 namespace cinder {
 
 /*
- * Forward declaration
+ * Forward declarations
  */
-template <typename T, size_t Size>
+template <typename, size_t>
 class Vector;
 
+template <typename T, size_t>
+class VectorView;
+
 /**
- * Base vector class without its own storage. Holds a reference to a segment of
- * an arbitrary array.
+ * The VectorMixin class defines basic functionality that should be provided by
+ * a constant-sized mathematical vector, such as addition, subtraction,
+ * iteration, assignment operations and calculation of the L2 norm. This class
+ * does not allocate any memory for the storage of the vector elements, it relys
+ * on an implementation class Impl to provide a pointer at the memory.
+ *
+ * @tparam Impl is the type of the class which derives from VectorMixin and
+ * which provides access at the underlying storage.
+ * @tparam Inst is the type of vector instance that should be created as the
+ * result of an operator.
+ * @tparam T is the underlying storage type.
+ * @tparam Size_ is the number of elements stored in this vector.
  */
-template <typename Impl, typename T, typename Mem, size_t Size, size_t Offs>
-class VectorView {
+template <typename Impl, typename Inst, typename T, size_t Size_>
+class VectorMixin {
 public:
-	using own_type = VectorView<Impl, T, Mem, Size, Offs>;
+	/**
+	 * Constant containing the size of the vector.
+	 */
+	static constexpr size_t Size = Size_;
+
+	/**
+	 * Type alias for the complete type of the VectorMixin.
+	 */
+	using Self = VectorMixin<Impl, Inst, T, Size_>;
+
+	/**
+	 * Type of the element stored in the vector.
+	 */
 	using value_type = T;
+
+	/**
+	 * Pointer type of the element stored in the vector.
+	 */
 	using pointer = T *;
+
+	/**
+	 * Const pointer type of the element stored in the vector.
+	 */
 	using const_pointer = const T *;
 
 private:
 	/**
-	 * Reference at the underlying storage.
+	 * Function which uses the Impl class to get access at the underlying memory
+	 * pointer.
+	 *
+	 * @return a pointer at the first element represented by this vector.
 	 */
-	Mem &m_mem;
+	T *mem() { return static_cast<Impl &>(*this).mem(); }
 
+	/**
+	 * Function which uses the Impl class to get access at the underlying const
+	 * memory pointer.
+	 *
+	 * @return a pointer at the first element represented by this vector.
+	 */
+	const T *mem() const { return static_cast<const Impl &>(*this).mem(); }
+
+	/**
+	 * Function which generically implements an element wise two-argument
+	 * function application. Used to implement mathematical operations.
+	 *
+	 * @tparam Func is the type of the function that should be applied.
+	 * @tparam Other is the type of the second vector.
+	 * @param v1 is the vector containing the left-hand arguments.
+	 * @param v2 is the vector containing the right-hand arguments.
+	 * @param f is the function that should be applied to v1 and v2.
+	 * @return a new vector instance.
+	 */
 	template <typename Func, typename Other>
-	friend Impl map(const own_type &v1, const Other &v2, Func f)
+	friend Inst map(const Self &v1, const Other &v2, Func f)
 	{
-		Impl res;
-		for (size_t i = 0; i < Size; i++) {
+		static_assert(Self::size() == Other::size(), "Vector size missmatch");
+
+		Inst res;
+		for (size_t i = 0; i < v1.size(); i++) {
 			res[i] = f(v1[i], v2[i]);
 		}
 		return res;
 	}
 
 	template <typename Func>
-	friend Impl map(const own_type &v, Func f)
+	friend Inst map(const Self &v, Func f)
 	{
-		Impl res;
-		for (size_t i = 0; i < Size; i++) {
+		Inst res;
+		for (size_t i = 0; i < v.size(); i++) {
 			res[i] = f(v[i]);
 		}
 		return res;
 	}
 
 	template <typename Func, typename Other>
-	friend void map_onto(own_type &v1, const Other &v2, Func f)
+	friend void map_onto(Self &v1, const Other &v2, Func f)
 	{
-		for (size_t i = 0; i < Size; i++) {
+		static_assert(Self::size() == Other::size(), "Vector size missmatch");
+
+		for (size_t i = 0; i < v1.size(); i++) {
 			f(v1[i], v2[i]);
 		}
 	}
 
 	template <typename Func>
-	friend void map_onto(own_type &v, Func f)
+	friend void map_onto(Self &v, Func f)
 	{
-		for (size_t i = 0; i < Size; i++) {
+		for (size_t i = 0; i < v.size(); i++) {
 			f(v[i]);
 		}
 	}
 
 public:
-	VectorView(Mem &mem) : m_mem(mem){};
-
 	static constexpr size_t size() { return Size; }
 
-	template <typename U = Mem, typename = typename std::enable_if<
-	                                !std::is_const<U>::value>::type>
+	template <typename U = Impl, typename = typename std::enable_if<
+	                                 !std::is_const<U>::value>::type>
 	pointer begin()
 	{
-		return &m_mem[Offs];
+		return &mem()[0];
 	}
 
-	template <typename U = Mem, typename = typename std::enable_if<
-	                                !std::is_const<U>::value>::type>
+	template <typename U = Impl, typename = typename std::enable_if<
+	                                 !std::is_const<U>::value>::type>
 	pointer end()
 	{
-		return &m_mem[Offs + Size];
+		return &mem()[Size];
 	}
 
-	const_pointer begin() const { return &m_mem[Offs]; }
+	const_pointer begin() const { return &mem()[0]; }
 
-	const_pointer end() const { return &m_mem[Offs + Size]; }
+	const_pointer end() const { return &mem()[Size]; }
 
 	template <typename Other, typename = typename std::enable_if<
 	                              !std::is_scalar<Other>::value>::type>
 	void assign(const Other &v)
 	{
-		static_assert(own_type::size() == Other::size(),
-		              "Vector size missmatch");
+		static_assert(Self::size() == Other::size(), "Vector size missmatch");
 		std::copy(v.begin(), v.end(), begin());
 	}
 
@@ -140,12 +196,12 @@ public:
 	/**
 	 * Returns a reference at the i-th element in the vector.
 	 */
-	value_type &operator[](size_t idx) { return m_mem[Offs + idx]; }
+	value_type &operator[](size_t idx) { return mem()[idx]; }
 
 	/**
 	 * Returns a copy of the i-th element in the vector.
 	 */
-	value_type operator[](size_t idx) const { return m_mem[Offs + idx]; }
+	value_type operator[](size_t idx) const { return mem()[idx]; }
 
 	value_type sqrL2Norm() const
 	{
@@ -158,7 +214,7 @@ public:
 
 	value_type L2Norm() const { return std::sqrt(sqrL2Norm()); }
 
-	friend std::ostream &operator<<(std::ostream &os, const own_type &m)
+	friend std::ostream &operator<<(std::ostream &os, const Self &m)
 	{
 		for (size_t i = 0; i < Size; i++) {
 			os << (i == 0 ? "" : ", ") << m[i];
@@ -168,117 +224,101 @@ public:
 
 	template <typename Other, typename = typename std::enable_if<
 	                              !std::is_scalar<Other>::value>::type>
-	friend void operator+=(own_type &v1, const Other &v2)
+	friend void operator+=(Self &v1, const Other &v2)
 	{
-		static_assert(own_type::size() == Other::size(),
-		              "Vector size missmatch");
 		map_onto(v1, v2, [](value_type &a, value_type b) { return a += b; });
 	}
 
 	template <typename Other, typename = typename std::enable_if<
 	                              !std::is_scalar<Other>::value>::type>
-	friend void operator-=(own_type &v1, const Other &v2)
+	friend void operator-=(Self &v1, const Other &v2)
 	{
-		static_assert(own_type::size() == Other::size(),
-		              "Vector size missmatch");
 		map_onto(v1, v2, [](value_type &a, value_type b) { return a -= b; });
 	}
 
 	template <typename Other, typename = typename std::enable_if<
 	                              !std::is_scalar<Other>::value>::type>
-	friend void operator*=(own_type &v1, const Other &v2)
+	friend void operator*=(Self &v1, const Other &v2)
 	{
-		static_assert(own_type::size() == Other::size(),
-		              "Vector size missmatch");
 		map_onto(v1, v2, [](value_type &a, value_type b) { return a *= b; });
 	}
 
 	template <typename Other, typename = typename std::enable_if<
 	                              !std::is_scalar<Other>::value>::type>
-	friend void operator/=(own_type &v1, const Other &v2)
+	friend void operator/=(Self &v1, const Other &v2)
 	{
-		static_assert(own_type::size() == Other::size(),
-		              "Vector size missmatch");
 		map_onto(v1, v2, [](value_type &a, value_type b) { return a /= b; });
 	}
 
 	template <typename Other, typename = typename std::enable_if<
 	                              !std::is_scalar<Other>::value>::type>
-	friend Impl operator+(const own_type &v1, const Other &v2)
+	friend Inst operator+(const Self &v1, const Other &v2)
 	{
-		static_assert(own_type::size() == Other::size(),
-		              "Vector size missmatch");
 		return map(v1, v2, [](value_type a, value_type b) { return a + b; });
 	}
 
 	template <typename Other, typename = typename std::enable_if<
 	                              !std::is_scalar<Other>::value>::type>
-	friend Impl operator-(const own_type &v1, const Other &v2)
+	friend Inst operator-(const Self &v1, const Other &v2)
 	{
-		static_assert(own_type::size() == Other::size(),
-		              "Vector size missmatch");
 		return map(v1, v2, [](value_type a, value_type b) { return a - b; });
 	}
 
 	template <typename Other, typename = typename std::enable_if<
 	                              !std::is_scalar<Other>::value>::type>
-	friend Impl operator*(const own_type &v1, const Other &v2)
+	friend Inst operator*(const Self &v1, const Other &v2)
 	{
-		static_assert(own_type::size() == Other::size(),
-		              "Vector size missmatch");
 		return map(v1, v2, [](value_type a, value_type b) { return a * b; });
 	}
 
 	template <typename Other, typename = typename std::enable_if<
 	                              !std::is_scalar<Other>::value>::type>
-	friend Impl operator/(const own_type &v1, const Other &v2)
+	friend Inst operator/(const Self &v1, const Other &v2)
 	{
-		static_assert(own_type::size() == Other::size(),
-		              "Vector size missmatch");
 		return map(v1, v2, [](value_type a, value_type b) { return a / b; });
 	}
 
-	friend void operator+=(own_type &v, value_type s)
+	friend void operator+=(Self &v, value_type s)
 	{
 		map_onto(v, [s](value_type &a) { return a += s; });
 	}
 
-	friend void operator-=(own_type &v, value_type s)
+	friend void operator-=(Self &v, value_type s)
 	{
 		map_onto(v, [s](value_type &a) { return a -= s; });
 	}
 
-	friend void operator*=(own_type &v, value_type s)
+	friend void operator*=(Self &v, value_type s)
 	{
 		map_onto(v, [s](value_type &a) { return a *= s; });
 	}
 
-	friend void operator/=(own_type &v, value_type s)
+	friend void operator/=(Self &v, value_type s)
 	{
 		map_onto(v, [s](value_type &a) { return a /= s; });
 	}
 
-	friend Impl operator+(const own_type &v, value_type s)
+	friend Inst operator+(const Self &v, value_type s)
 	{
 		return map(v, [s](value_type a) { return a + s; });
 	}
 
-	friend Impl operator-(const own_type &v, value_type s)
+	friend Inst operator-(const Self &v, value_type s)
 	{
 		return map(v, [s](value_type a) { return a - s; });
 	}
 
-	friend Impl operator*(value_type s, const own_type &v)
+	friend Inst operator*(value_type s, const Self &v)
 	{
 		return map(v, [s](value_type a) { return s * a; });
 	}
 
-	friend Impl operator*(const own_type &v, value_type s)
+	friend Inst operator*(const Self &v, value_type s)
 	{
 		return map(v, [s](value_type a) { return a * s; });
 	}
 
-	friend Impl operator/(const own_type &v, value_type s)
+	friend Inst operator/(const Self &v, value_type s)
 	{
 		return map(v, [s](value_type a) { return a / s; });
 	}
@@ -290,93 +330,122 @@ public:
 	template <size_t ViewSize, size_t ViewOffs = 0>
 	auto view()
 	{
-		return VectorView<Vector<T, ViewSize>, T, Mem, ViewSize,
-		                  Offs + ViewOffs>(m_mem);
+		return VectorView<T, ViewSize>(mem() + ViewOffs);
 	}
 
 	template <size_t ViewSize, size_t ViewOffs = 0>
 	auto view() const
 	{
-		return VectorView<Vector<T, ViewSize>, T, Mem, ViewSize,
-		                  Offs + ViewOffs>(m_mem);
+		return VectorView<const T, ViewSize>(mem() + ViewOffs);
 	}
 };
 
-template <typename Impl, typename T, size_t Size>
-class alignas(16) VectorBase
-    : public VectorView<Impl, T, std::array<T, Size>, Size, 0> {
-public:
-	using own_type = VectorBase<Impl, T, Size>;
-	using base_type = VectorView<Impl, T, std::array<T, Size>, Size, 0>;
-	using array_type = std::array<T, Size>;
-
+/**
+ * Vector class without own storage which implements a view at another vector.
+ * The lifetime of a VectorView instance is coupled to the underlying vector.
+ */
+template <typename T, size_t Size>
+class VectorView
+    : public VectorMixin<VectorView<T, Size>, Vector<T, Size>, T, Size> {
 private:
-	array_type m_arr;
-
-public:
-	VectorBase() : VectorView<Impl, T, std::array<T, Size>, Size, 0>(m_arr) {}
-
-	VectorBase(const own_type &o)
-	    : VectorView<Impl, T, std::array<T, Size>, Size, 0>(m_arr),
-	      m_arr(o.m_arr)
-	{
-		// Prevent VectorView from copying the memory pointer
-	}
-
-	own_type &operator=(const own_type &o)
-	{
-		// Prevent VectorView from copying the memory pointer
-		m_arr = o.m_arr;
-		return *this;
-	}
-
-	VectorBase(const array_type &arr)
-	    : VectorView<Impl, T, std::array<T, Size>, Size, 0>(m_arr), m_arr(arr)
-	{
-	}
-
-	VectorBase(std::initializer_list<T> init) : VectorBase()
-	{
-		std::copy(init.begin(), init.begin() + std::min(Size, init.size()),
-		          m_arr.begin());
-	}
+	friend class VectorMixin<VectorView<T, Size>, Vector<T, Size>, T, Size>;
 
 	/**
-	 * Returns a view onto this vector of ViewSize elements, starting at the
-	 * element indicated by ViewOffs.
+	 * Pointer at the first storage element.
 	 */
-	template <size_t ViewSize, size_t ViewOffs = 0>
-	auto view()
-	{
-		return VectorView<Vector<T, ViewSize>, T, std::array<T, Size>, ViewSize,
-		                  ViewOffs>(m_arr);
-	}
+	T *m_mem;
 
-	template <size_t ViewSize, size_t ViewOffs = 0>
-	auto view() const
-	{
-		return VectorView<Vector<T, ViewSize>, T, const std::array<T, Size>,
-		                  ViewSize, ViewOffs>(m_arr);
-	}
+	/**
+	 * Returns the storage pointer.
+	 */
+	T *mem() { return m_mem; }
+
+	/**
+	 * Returns a const version of the storage pointer.
+	 */
+	const T *mem() const { return m_mem; }
+
+public:
+	/**
+	 * Create a new VectorView instance with the first element pointing at the
+	 * given memory-location.
+	 *
+	 * @param mem is the memory-location of the first element in the vector
+	 * view.
+	 */
+	VectorView(T *mem) : m_mem(mem) {}
 };
 
+/**
+ * Base class for custom fixed-size vector types. In contrast to VectorMixin and
+ * VectorView this class provides its own storage space. Derive from this class
+ * to provide a specialised vector class with its own member functions.
+ */
+template <typename Inst, typename T, size_t Size>
+class alignas(16) VectorBase
+    : public VectorMixin<VectorBase<Inst, T, Size>, Inst, T, Size> {
+private:
+	friend class VectorMixin<VectorBase<Inst, T, Size>, Inst, T, Size>;
+
+	/**
+	 * Fixed-size array containing the vector elements.
+	 */
+	std::array<T, Size> m_arr;
+
+	/**
+	 * Provides access at the first element in the array.
+	 */
+	T *mem() { return &m_arr[0]; }
+
+	/**
+	 * Provides const access at the first element in the array.
+	 */
+	const T *mem() const { return &m_arr[0]; }
+
+public:
+	using Self = VectorBase<Inst, T, Size>;
+
+	/**
+	 * Default constructor. Default-initializes all vector elements.
+	 */
+	VectorBase() {}
+
+	/**
+	 * Constructor which allows to initialize the vector with an array
+	 * containing the vector elements.
+	 */
+	VectorBase(const std::array<T, Size> &arr) : m_arr(arr) {}
+};
+
+/**
+ * Simple specialization of VectorBase. Provides a mathematical vector with
+ * fixed size. This class is also used to store intermediate results from vector
+ * views.
+ */
 template <typename T, size_t Size>
 class Vector final : public VectorBase<Vector<T, Size>, T, Size> {
 public:
 	using VectorBase<Vector, T, Size>::VectorBase;
 };
 
-#define NAMED_VECTOR_ELEMENT(NAME, IDX)           \
-	static constexpr size_t idx_##NAME = IDX;     \
-	void NAME(value_type x) { (*this)[IDX] = x; } \
-	value_type &NAME() { return (*this)[IDX]; }   \
+#define NAMED_VECTOR_ELEMENT(NAME, IDX)         \
+	static constexpr size_t idx_##NAME = IDX;   \
+	Self &NAME(value_type x)                    \
+	{                                           \
+		(*this)[IDX] = x;                       \
+		return *this;                           \
+	}                                           \
+	value_type &NAME() { return (*this)[IDX]; } \
 	value_type NAME() const { return (*this)[IDX]; }
 
-#define TYPED_VECTOR_ELEMENT(NAME, IDX, TYPE)   \
-	static constexpr size_t idx_##NAME = IDX;   \
-	own_type& NAME(TYPE x) { (*this)[IDX] = x.v(); return *this;} \
+#define TYPED_VECTOR_ELEMENT(NAME, IDX, TYPE) \
+	static constexpr size_t idx_##NAME = IDX; \
+	Self &NAME(TYPE x)                        \
+	{                                         \
+		(*this)[IDX] = x.v();                 \
+		return *this;                         \
+	}                                         \
 	TYPE NAME() const { return TYPE((*this)[IDX]); }
 }
 
 #endif /* CINDER_COMMON_VECTOR_HPP */
-
