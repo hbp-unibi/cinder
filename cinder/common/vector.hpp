@@ -381,11 +381,11 @@ public:
  * VectorView this class provides its own storage space. Derive from this class
  * to provide a specialised vector class with its own member functions.
  */
-template <typename Inst, typename T, size_t Size>
+template <typename Inst_, typename T, size_t Size>
 class alignas(16) VectorBase
-    : public VectorMixin<VectorBase<Inst, T, Size>, Inst, T, Size> {
+    : public VectorMixin<VectorBase<Inst_, T, Size>, Inst_, T, Size> {
 private:
-	friend class VectorMixin<VectorBase<Inst, T, Size>, Inst, T, Size>;
+	friend class VectorMixin<VectorBase<Inst_, T, Size>, Inst_, T, Size>;
 
 	/**
 	 * Fixed-size array containing the vector elements.
@@ -403,7 +403,8 @@ private:
 	const T *mem() const { return &m_arr[0]; }
 
 public:
-	using Self = VectorBase<Inst, T, Size>;
+	using Self = VectorBase<Inst_, T, Size>;
+	using Inst = Inst_;
 
 	/**
 	 * Default constructor. Default-initializes all vector elements.
@@ -430,20 +431,20 @@ public:
 
 #define NAMED_VECTOR_ELEMENT(NAME, IDX)         \
 	static constexpr size_t idx_##NAME = IDX;   \
-	Self &NAME(value_type x)                    \
+	Inst &NAME(value_type x)                    \
 	{                                           \
 		(*this)[IDX] = x;                       \
-		return *this;                           \
+		static_cast<Inst &>(*this);             \
 	}                                           \
 	value_type &NAME() { return (*this)[IDX]; } \
 	value_type NAME() const { return (*this)[IDX]; }
 
 #define TYPED_VECTOR_ELEMENT(NAME, IDX, TYPE) \
 	static constexpr size_t idx_##NAME = IDX; \
-	Self &NAME(TYPE x)                        \
+	Inst &NAME(TYPE x)                        \
 	{                                         \
 		(*this)[IDX] = x.v();                 \
-		return *this;                         \
+		return static_cast<Inst &>(*this);    \
 	}                                         \
 	TYPE NAME() const { return TYPE((*this)[IDX]); }
 }
