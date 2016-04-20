@@ -409,13 +409,13 @@ public:
 	/**
 	 * Default constructor. Default-initializes all vector elements.
 	 */
-	VectorBase() {}
+	constexpr VectorBase() {}
 
 	/**
 	 * Constructor which allows to initialize the vector with an array
 	 * containing the vector elements.
 	 */
-	VectorBase(const std::array<T, Size> &arr) : m_arr(arr) {}
+	constexpr VectorBase(const std::array<T, Size> &arr) : m_arr(arr) {}
 };
 
 /**

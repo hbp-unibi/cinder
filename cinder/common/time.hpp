@@ -140,7 +140,7 @@ public:
 	 *
 	 * @return the current time value in seconds.
 	 */
-	double sec() const { return double(t) * TIME_TO_SEC; }
+	constexpr double sec() const { return double(t) * TIME_TO_SEC; }
 
 	/* Operators */
 
