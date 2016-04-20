@@ -29,6 +29,7 @@ add_executable(test_cinder
 	models/neurons/test_lif
 	models/neurons/test_adex
 	models/synapses/test_cur_exp
+	models/synapses/test_dirac
 	ode/test_solver
 )
 target_link_libraries(test_cinder
