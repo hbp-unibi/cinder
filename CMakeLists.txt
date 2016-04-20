@@ -62,6 +62,7 @@ add_library(cinder
 	cinder/models/neuron
 	cinder/models/synapse
 	cinder/models/neurons/lif
+	cinder/models/neurons/adex
 	cinder/models/synapses/cur_exp
 	cinder/models/synapses/cond_exp
 	cinder/models/synapses/cond_exp
