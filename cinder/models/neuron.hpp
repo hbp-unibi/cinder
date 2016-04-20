@@ -153,6 +153,13 @@ public:
 	CurrentSource &current_source() { return m_current_source; }
 	const CurrentSource &current_source() const { return m_current_source; }
 
+	template <typename State, typename System>
+	void init(Time t, const State &s, const System &sys)
+	{
+		m_membrane.init(t, s, sys);
+		m_current_source.init(t, s, sys);
+	}
+
 	State s0() const
 	{
 		State res;

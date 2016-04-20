@@ -43,6 +43,14 @@ struct ODEBase {
 	using State = State_;
 
 	/**
+	 * Allows the implementations to perform some initialization.
+	 */
+	template <typename State, typename System>
+	static void init(Time, const State &, const System &)
+	{
+	}
+
+	/**
 	 * Returns the initial state of the current source.
 	 */
 	static State s0() { return State(); }

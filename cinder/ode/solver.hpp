@@ -140,6 +140,9 @@ public:
 		ODE &ode = m_sys.ode();
 		Recorder &recorder = m_sys.recorder();
 
+		// Call the initialization routine
+		ode.init(t, s, m_sys);
+
 		// Iterate over all time slices
 		Time dt;
 		while (t < tEnd && t >= Time(0)) {

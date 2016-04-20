@@ -189,6 +189,25 @@ private:
 	std::tuple<T...> instances;
 
 	/*
+	 * Compile-time recursive implementation of init.
+	 */
+	template <typename State2, typename System, size_t I, size_t Offs>
+	void init_impl(Time, const State2 &, const System &) const
+	{
+	}
+
+	template <typename State2, typename System, size_t I, size_t Offs,
+	          typename T0, typename... Ts>
+	void init_impl(Time t, const State2 &s, const System &sys) const
+	{
+		using InnerState = typename T0::State;
+		static constexpr size_t InnerSize = InnerState::size();
+
+		std::get<I>(instances).init(t, s.template view<InnerSize, Offs>(), sys);
+		init_impl<State2, System, I + 1, Offs + InnerSize, Ts...>(t, s, sys);
+	}
+
+	/*
 	 * Compile-time recursive implementation of s0.
 	 */
 	template <size_t I, size_t Offs>
@@ -315,6 +334,12 @@ private:
 
 public:
 	MultiCurrentSource(const T &... args) : instances(args...) {}
+
+	template <typename State2, typename System>
+	void init(Time t, const State2 &s, const System &sys)
+	{
+		init_impl<State2, System, 0, 0, T...>(t, s, sys);
+	}
 
 	State s0() const
 	{

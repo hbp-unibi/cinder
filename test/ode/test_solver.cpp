@@ -39,6 +39,11 @@ struct SawtoothODE {
 		using VectorBase<State, Real, 2>::VectorBase;
 	};
 
+	template <typename State2, typename System>
+	static void init(Time, const State2 &, const System &)
+	{
+	}
+
 	static State s0() { return State({0, 1.0}); }
 
 	static Time next_discontinuity(Time t)
