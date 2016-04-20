@@ -50,7 +50,10 @@ private:
 	Time m_min_delta;
 
 public:
-	CSVRecorder(std::ostream &os, Time min_delta = 0.1_ms): m_os(os), m_last_time(MIN_TIME), m_min_delta(min_delta) {}
+	CSVRecorder(std::ostream &os, Time min_delta = 0.1_ms)
+	    : m_os(os), m_last_time(MIN_TIME), m_min_delta(min_delta)
+	{
+	}
 
 	template <typename State, typename System>
 	void record(Time t, const State &s, const System &)
@@ -60,14 +63,14 @@ public:
 		// if less than m_min_delta has passed since the last recording, abort.
 		if (m_last_time >= t) {
 			t = m_last_time + Time(1);
-		} else if (m_last_time + m_min_delta > t) {
+		}
+		else if (m_last_time + m_min_delta > t) {
 			return;
 		}
 		m_os << t << ", " << s << '\n';
 		m_last_time = t;
 	}
 };
-
 }
 
 #endif /* CINDER_MODELS_NEURONS_LIF_HPP */

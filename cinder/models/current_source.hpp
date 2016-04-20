@@ -345,15 +345,17 @@ private:
 		return Current(0.0);
 	}
 
-	template <typename State2, typename System, size_t I, size_t Offs, typename T0,
-	          typename... Ts>
+	template <typename State2, typename System, size_t I, size_t Offs,
+	          typename T0, typename... Ts>
 	Current current_impl(const State2 &s, const System &sys) const
 	{
 		using InnerState = typename T0::State;
 		static constexpr size_t InnerSize = InnerState::size();
 
-		return std::get<I>(instances).current(s.template view<InnerSize, Offs>(), sys) +
-		       current_impl<State2, System, I + 1, Offs + InnerSize, Ts...>(s, sys);
+		return std::get<I>(instances)
+		           .current(s.template view<InnerSize, Offs>(), sys) +
+		       current_impl<State2, System, I + 1, Offs + InnerSize, Ts...>(
+		           s, sys);
 	}
 
 public:
