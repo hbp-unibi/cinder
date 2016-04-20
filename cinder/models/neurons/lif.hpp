@@ -84,11 +84,11 @@ struct LIFParameters : public VectorBase<LIFParameters, Real, 7> {
 };
 
 template <typename SpikeCallback_>
-class LIF : public SpikingMembraneBase<LIFState, LIFParameters, SpikeCallback_,
-                                       true> {
+class LIF : public SpikingMembraneBase<LIF<SpikeCallback_>, LIFState, LIFParameters,
+                                       SpikeCallback_, true> {
 private:
-	using Base =
-	    SpikingMembraneBase<LIFState, LIFParameters, SpikeCallback_, true>;
+	using Base = SpikingMembraneBase<LIF<SpikeCallback_>, LIFState,
+	                                 LIFParameters, SpikeCallback_, true>;
 
 public:
 	using Base::Base;

@@ -94,13 +94,25 @@ public:
  * Izhekevich models. Handles the generation and emission of spikes as well as
  * the refractory period.
  */
-template <typename State_, typename Parameters_, typename SpikeCallback_,
+template <typename Impl_, typename State_, typename Parameters_, typename SpikeCallback_,
           bool ArtificialSpike_>
 class SpikingMembraneBase
     : public MembraneBase<State_, Parameters_, SpikeCallback_> {
 private:
 	using Base = MembraneBase<State_, Parameters_, SpikeCallback_>;
 	Time m_ref_end = MAX_TIME;
+
+	Impl_& impl() { return static_cast<Impl_&>(*this); }
+
+protected:
+	/**
+	 * Function called whenever an output spike is generated. Allows some models
+	 * to update their interal state whenever an output spike occurs.
+	 */
+	template<typename State, typename System>
+	void handle_output_spike(Time, State &, System &) {
+		// Do nothing in the default implementation.
+	}
 
 public:
 	using Base::Base;
@@ -142,11 +154,12 @@ public:
 			if (ArtificialSpike_) {
 				// Set the membrane potential to the spike potential
 				s[0] = p().v_spike();
-				sys.recorder().record(t, sys.s(), sys);
 			}
+			sys.recorder().record(t, sys.s(), sys);
 
 			// Set the membrane potential to the reset potential
 			s[0] = p().v_reset();
+			impl().handle_output_spike(t, s, sys);
 			emit_spike(t);
 		}
 	}

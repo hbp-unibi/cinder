@@ -67,7 +67,7 @@ struct AdExParameters : public VectorBase<AdExParameters, Real, 11> {
 		v_spike(-40.0_mV);
 		tau_refrac(0.1_ms);
 		delta_T(2.0_mV);
-		a(4.0_uS);
+		a(4.0_nS);
 		b(0.0805_nA);
 		tau_w(144.0_ms);
 	}
@@ -94,12 +94,23 @@ struct AdExParameters : public VectorBase<AdExParameters, Real, 11> {
 };
 
 template <typename SpikeCallback_>
-class AdEx : public SpikingMembraneBase<AdExState, AdExParameters,
-                                        SpikeCallback_, false> {
+class AdEx : public SpikingMembraneBase<AdEx<SpikeCallback_>, AdExState,
+                                        AdExParameters, SpikeCallback_, false> {
 private:
-	using Base =
-	    SpikingMembraneBase<AdExState, AdExParameters, SpikeCallback_, false>;
+	friend class SpikingMembraneBase<AdEx<SpikeCallback_>, AdExState,
+	                                 AdExParameters, SpikeCallback_, false>;
+	using Base = SpikingMembraneBase<AdEx<SpikeCallback_>, AdExState,
+	                                 AdExParameters, SpikeCallback_, false>;
 	Real max_i_th_exp;
+
+	/**
+	 * Function called whenever an output spike is generated. Allows some models
+	 * to update their interal state whenever an output spike occurs.
+	 */
+	template<typename State, typename System>
+	void handle_output_spike(Time, State &s, System &) {
+		s[1] += p().b();
+	}
 
 public:
 	using Base::Base;
@@ -117,17 +128,17 @@ public:
 	template <typename State, typename System>
 	AdExState df(const State &s, const System &sys) const
 	{
-		const Real dw = -s[1] * p().tau_w();
+		const Real dw = (p().a() * (s[0] - p().v_rest()) - s[1]) / p().tau_w();
 		if (in_refrac()) {
 			return AdExState({0, dw});
 		}
 		const Current i_syn{sys.ode().current(s, sys)};
 		const Current i_rest{(p().v_rest() - s[0]) * p().g_leak()};
 		const Current i_th_exp{(s[0] - p().v_thresh()) / p().delta_T()};
-		const Current i_th{std::exp(std::min(max_i_th_exp, i_th_exp.v()))};
+		const Current i_th{p().g_leak().v() * p().delta_T().v() *
+		                   std::exp(std::min(max_i_th_exp, i_th_exp.v()))};
 		const Current i_w{s[1]};
 		const Real dv = (i_rest + i_syn + i_th - i_w) / p().cm();
-		std::cout << s[0] << ", " << i_syn << ", " << i_rest << ", " << i_th_exp << ", " << i_th << ", " << i_w << ", " << dv << std::endl;
 		return AdExState({dv, dw});
 	}
 };
