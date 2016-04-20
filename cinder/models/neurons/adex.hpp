@@ -101,7 +101,11 @@ private:
 	                                 AdExParameters, SpikeCallback_, false>;
 	using Base = SpikingMembraneBase<AdEx<SpikeCallback_>, AdExState,
 	                                 AdExParameters, SpikeCallback_, false>;
-	Real max_i_th_exp;
+	Real m_max_i_th_exp;
+	Real m_delta_t_inv;
+	Real m_cm_inv;
+	Real m_tau_m_inv;
+	Real m_tau_w_inv;
 
 	/**
 	 * Function called whenever an output spike is generated. Allows some models
@@ -120,25 +124,33 @@ public:
 	template <typename State, typename System>
 	void init(Time, const State &, const System &)
 	{
+		// Calculate the maximum exponent allowed in the threshold current
 		static constexpr RealTime MIN_DELTA_T = 0.1_us;
-		max_i_th_exp = log((p().v_spike() - p().v_reset()) /
+		m_max_i_th_exp = log((p().v_spike() - p().v_reset()) /
 		                   (MIN_DELTA_T.v() * p().delta_T() / p().tau_m()));
+
+		// Use the inverse of some values in order to avoid divisions in the
+		// df code.
+		m_delta_t_inv = 1.0 / p().delta_T();
+		m_cm_inv = 1.0 / p().cm();
+		m_tau_w_inv = 1.0 / p().tau_w();
+		m_tau_m_inv = 1.0 / p().tau_m();
 	}
 
 	template <typename State, typename System>
 	AdExState df(const State &s, const System &sys) const
 	{
-		const Real dw = (p().a() * (s[0] - p().v_rest()) - s[1]) / p().tau_w();
+		const Real dw = (p().a() * (s[0] - p().v_rest()) - s[1]) * m_tau_w_inv;
 		if (in_refrac()) {
 			return AdExState({0, dw});
 		}
 		const Current i_syn{sys.ode().current(s, sys)};
 		const Current i_rest{(p().v_rest() - s[0]) * p().g_leak()};
-		const Current i_th_exp{(s[0] - p().v_thresh()) / p().delta_T()};
+		const Current i_th_exp{(s[0] - p().v_thresh()) * m_delta_t_inv};
 		const Current i_th{p().g_leak().v() * p().delta_T().v() *
-		                   std::exp(std::min(max_i_th_exp, i_th_exp.v()))};
+		                   fast::exp(std::min(m_max_i_th_exp, i_th_exp.v()))};
 		const Current i_w{s[1]};
-		const Real dv = (i_rest + i_syn + i_th - i_w) / p().cm();
+		const Real dv = (i_rest + i_syn + i_th - i_w) * m_cm_inv;
 		return AdExState({dv, dw});
 	}
 };

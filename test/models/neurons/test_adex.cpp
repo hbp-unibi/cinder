@@ -43,17 +43,16 @@ TEST(adex, cond_exp)
 	    217.348_ms, 219.115_ms, 221.513_ms, 226.102_ms};
 
 	DormandPrinceIntegrator integrator;
-	std::ofstream os("adex_cond_exp.csv");
-	CSVRecorder recorder(os);
+	NullRecorder recorder;
 	NullController controller;
 	std::vector<Time> spikes;
 
-	// Create a linear integrate and fire neuron with a current based synapse
-	auto current_source = make_current_source(
-	    CondExp(0.1_uS, 10_ms, 0_V, {10_ms, 30_ms, 40_ms, 50_ms, 100_ms, 200_ms,
-	                                 202_ms, 204_ms, 206_ms, 208_ms}));
-	auto neuron = make_neuron<AdEx>(current_source,
-	                                [&spikes](Time t) { spikes.push_back(t); });
+	// Create an AdEx neuron with a current based synapse
+	auto current_source = make_current_source(CondExp(
+	    0.1_uS, 10_ms, 0_V, {10_ms, 30_ms, 40_ms, 50_ms, 100_ms, 200_ms,
+	                         202_ms, 204_ms, 206_ms, 208_ms}));
+	auto neuron = make_neuron<AdEx>(
+	    current_source, [&spikes](Time t) { spikes.push_back(t); });
 
 	// Solve the equation
 	make_solver(neuron, integrator, recorder, controller).solve(1_s);
@@ -61,7 +60,7 @@ TEST(adex, cond_exp)
 	// Make sure the two results are within the range of one millisecond
 	ASSERT_EQ(expected_spikes.size(), spikes.size());
 	for (size_t i = 0; i < spikes.size(); i++) {
-		EXPECT_GT(0.3_ms, std::abs(expected_spikes[i] - spikes[i]));
+	    EXPECT_GT(0.3_ms, std::abs(expected_spikes[i] - spikes[i]));
 	}
 }
 }
