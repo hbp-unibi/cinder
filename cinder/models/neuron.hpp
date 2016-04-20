@@ -93,6 +93,9 @@ public:
 	}
 };
 
+/**
+ * Implementation of a basic parameterised neuron membrane.
+ */
 template <typename State_, typename Parameters_, typename SpikeCallback_>
 class MembraneBase : public ODEBase<State_> {
 public:
@@ -117,7 +120,20 @@ public:
 	{
 	}
 
+	/**
+	 * Returns the initial state vector. Sets the initial potential to the
+	 * resting potential.
+	 */
+	State_ s0() const { return State_().v(p().v_rest()); }
+
+	/**
+	 * Returns a writable reference at the parameter vector.
+	 */
 	Parameters &p() { return m_params; }
+
+	/**
+	 * Returns a constant reference at the parameter vector.
+	 */
 	const Parameters &p() const { return m_params; }
 
 	/**
@@ -127,6 +143,69 @@ public:
 	Voltage voltage(const State &s, const System &) const
 	{
 		return Voltage(s[0]);
+	}
+};
+
+/**
+ * Class which implements the spiking mechanism used in the LIF, AdEx and
+ * Izhekevich models. Handles the generation and emission of spikes as well as
+ * the refractory period.
+ */
+template <typename State_, typename Parameters_, typename SpikeCallback_,
+          bool ArtificialSpike_>
+class SpikingMembraneBase
+    : public MembraneBase<State_, Parameters_, SpikeCallback_> {
+private:
+	using Base = MembraneBase<State_, Parameters_, SpikeCallback_>;
+	Time m_ref_end = MAX_TIME;
+
+public:
+	using Base::Base;
+	using Base::p;
+	using Base::emit_spike;
+
+	/**
+	 * Returns true if the membrane currently is in its refractory state.
+	 */
+	bool in_refrac() const { return m_ref_end != MAX_TIME; }
+
+	/**
+	 * Returns the time at which the refractory period will end.
+	 */
+	Time next_discontinuity(Time) const { return m_ref_end; }
+
+	/**
+	 * Ends the refractory period once its end is reached.
+	 */
+	template <typename State, typename System>
+	void handle_discontinuity(Time t, State &, System &)
+	{
+		if (t >= m_ref_end) {
+			m_ref_end = MAX_TIME;
+		}
+	}
+
+	/**
+	 * Emit a spike whenever the threshold potential is surpassed.
+	 */
+	template <typename State, typename System>
+	void update(Time t, State &s, System &sys)
+	{
+		const Voltage v_th = ArtificialSpike_ ? p().v_thresh() : p().v_spike();
+		if (s[0] >= v_th) {
+			// Plan the end of the refractory period
+			m_ref_end = t + Time::sec(p().tau_refrac());
+
+			if (ArtificialSpike_) {
+				// Set the membrane potential to the spike potential
+				s[0] = p().v_spike();
+				sys.recorder().record(t, sys.s(), sys);
+			}
+
+			// Set the membrane potential to the reset potential
+			s[0] = p().v_reset();
+			emit_spike(t);
+		}
 	}
 };
 

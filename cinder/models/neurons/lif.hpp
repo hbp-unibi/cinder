@@ -39,6 +39,8 @@ namespace cinder {
 struct LIFState : public VectorBase<LIFState, Real, 1> {
 	using VectorBase<LIFState, Real, 1>::VectorBase;
 
+	TYPED_VECTOR_ELEMENT(v, 0, Voltage);
+
 	static constexpr LIFState norm() { return LIFState({1e3}); }
 };
 
@@ -82,62 +84,26 @@ struct LIFParameters : public VectorBase<LIFParameters, Real, 7> {
 };
 
 template <typename SpikeCallback_>
-class LIF : public MembraneBase<LIFState, LIFParameters, SpikeCallback_> {
+class LIF : public SpikingMembraneBase<LIFState, LIFParameters, SpikeCallback_,
+                                       true> {
 private:
-	using Base = MembraneBase<LIFState, LIFParameters, SpikeCallback_>;
-	Time m_ref_end = MAX_TIME;
+	using Base =
+	    SpikingMembraneBase<LIFState, LIFParameters, SpikeCallback_, true>;
 
 public:
 	using Base::Base;
+	using Base::in_refrac;
 	using Base::p;
-	using Base::emit_spike;
-
-	LIFState s0() const { return LIFState({p().v_rest()}); }
-
-	/**
-	 * Returns the time at which the refractory period will end.
-	 */
-	Time next_discontinuity(Time) const { return m_ref_end; }
-
-	template <typename State, typename System>
-	void handle_discontinuity(Time t, State &, System &)
-	{
-		if (t >= m_ref_end) {
-			m_ref_end = MAX_TIME;
-		}
-	}
-
-	/**
-	 * Emit a spike whenever the threshold potential is surpassed.
-	 */
-	template <typename State, typename System>
-	void update(Time t, State &s, System &sys)
-	{
-		if (s[0] > p().v_thresh()) {
-			// Plan the end of the refractory period
-			m_ref_end = t + Time::sec(p().tau_refrac());
-
-			// Set the membrane potential to the spike potential
-			s[0] = p().v_spike();
-			sys.recorder().record(t, sys.s(), sys);
-
-			// Set the membrane potential to the reset potential
-			s[0] = p().v_reset();
-			emit_spike(t);
-		}
-	}
 
 	template <typename State, typename System>
 	LIFState df(const State &s, const System &sys) const
 	{
-		if (m_ref_end == MAX_TIME) {
-			const Current i_syn{sys.ode().current(s, sys)};
-			const Current i_rest{(p().v_rest() - s[0]) * p().g_leak()};
-			return LIFState({(i_rest + i_syn) / p().cm()});
-		}
-		else {
+		if (in_refrac()) {
 			return LIFState({0});
 		}
+		const Current i_syn{sys.ode().current(s, sys)};
+		const Current i_rest{(p().v_rest() - s[0]) * p().g_leak()};
+		return LIFState({(i_rest + i_syn) / p().cm()});
 	}
 };
 }
