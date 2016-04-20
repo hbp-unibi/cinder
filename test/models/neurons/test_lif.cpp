@@ -50,9 +50,7 @@ TEST(lif, cur_exp)
 	                               [&spikes](Time t) { spikes.push_back(t); });
 
 	// Solve the equation
-	make_solver(neuron, integrator, recorder, controller).solve(1_s, 1_ms);
-
-	EXPECT_EQ(expected_spikes.size(), spikes.size());
+	make_solver(neuron, integrator, recorder, controller).solve(1_s);
 
 	// Make sure the two results are within the range of one millisecond
 	ASSERT_EQ(expected_spikes.size(), spikes.size());
@@ -82,10 +80,10 @@ TEST(lif, cond_exp)
 	                                 202_ms, 204_ms, 206_ms, 208_ms}));
 	auto neuron = make_neuron<LIF>(current_source, [&spikes](Time t) {
 		spikes.push_back(t);
-	}, LIFParameters().g_leak(50_nS));
+	});
 
 	// Solve the equation
-	make_solver(neuron, integrator, recorder, controller).solve(1_s, 1_us);
+	make_solver(neuron, integrator, recorder, controller).solve(1_s);
 
 	// Make sure the two results are within the range of one millisecond
 	ASSERT_EQ(expected_spikes.size(), spikes.size());
