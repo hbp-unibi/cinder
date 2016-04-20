@@ -36,63 +36,6 @@
 #include <cinder/ode/ode.hpp>
 
 namespace cinder {
-
-/**
- * Vector class representing both the neuron state and the current source state.
- */
-template <typename MembraneState_, typename CurrentSourceState_>
-class NeuronState
-    : public VectorBase<NeuronState<MembraneState_, CurrentSourceState_>, Real,
-                        MembraneState_::size() + CurrentSourceState_::size()> {
-public:
-	using MembraneState = MembraneState_;
-	using CurrentSourceState = CurrentSourceState_;
-	using Base =
-	    VectorBase<NeuronState<MembraneState_, CurrentSourceState_>, Real,
-	               MembraneState_::size() + CurrentSourceState_::size()>;
-	using Base::Base;
-
-	static constexpr NeuronState norm()
-	{
-		return concat<Real>(MembraneState::norm().as_array(),
-		              CurrentSourceState::norm().as_array());
-	}
-
-	/**
-	 * Returns a view at the neuron state vector.
-	 */
-	auto membrane_state()
-	{
-		return Base::template view<MembraneState::size(), 0>();
-	}
-
-	/**
-	 * Returns a view at the neuron state vector.
-	 */
-	auto membrane_state() const
-	{
-		return Base::template view<MembraneState::size(), 0>();
-	}
-
-	/**
-	 * Returns a view at the current source state vector.
-	 */
-	auto current_source_state()
-	{
-		return Base::template view<CurrentSourceState::size(),
-		                           MembraneState::size()>();
-	}
-
-	/**
-	 * Returns a view at the current source state vector.
-	 */
-	auto current_source_state() const
-	{
-		return Base::template view<CurrentSourceState::size(),
-		                           MembraneState::size()>();
-	}
-};
-
 /**
  * Implementation of a basic parameterised neuron membrane.
  */
@@ -213,78 +156,34 @@ public:
  * Combines a membrane and a current source to a neuron.
  */
 template <typename Membrane_, typename CurrentSource_>
-class Neuron : public ODEBase<NeuronState<typename Membrane_::State,
-                                          typename CurrentSource_::State>> {
+class Neuron : public MultiODE<Membrane_, CurrentSource_> {
 public:
+	using Base = MultiODE<Membrane_, CurrentSource_>;
 	using Membrane = Membrane_;
 	using CurrentSource = CurrentSource_;
 	using MembraneState = typename Membrane::State;
 	using CurrentSourceState = typename CurrentSource::State;
-	using State = NeuronState<MembraneState, CurrentSourceState>;
-
-private:
-	Membrane m_membrane;
-	CurrentSource m_current_source;
 
 public:
-	Neuron(const Membrane &membrane, const CurrentSource &current_source)
-	    : m_membrane(membrane), m_current_source(current_source)
-	{
-	}
+	using MultiODE<Membrane_, CurrentSource_>::MultiODE;
 
-	Membrane &membrane() { return m_membrane; }
-	const Membrane &membrane() const { return m_membrane; }
+	Membrane &membrane() { return Base::template get<0>(); }
+	const Membrane &membrane() const { return Base::template get<0>(); }
 
-	CurrentSource &current_source() { return m_current_source; }
-	const CurrentSource &current_source() const { return m_current_source; }
+	CurrentSource &current_source() { return Base::template get<1>(); }
+	const CurrentSource &current_source() const { return Base::template get<1>(); }
 
 	template <typename State, typename System>
 	void init(Time t, const State &s, const System &sys)
 	{
-		m_membrane.init(t, s, sys);
-		m_current_source.init(t, s, sys);
-	}
-
-	State s0() const
-	{
-		State res;
-		res.membrane_state().assign(m_membrane.s0());
-		res.current_source_state().assign(m_current_source.s0());
-		return res;
-	}
-
-	Time next_discontinuity(Time t) const
-	{
-		return std::min(m_membrane.next_discontinuity(t),
-		                m_current_source.next_discontinuity(t));
-	}
-
-	template <typename State, typename System>
-	void handle_discontinuity(Time t, State &s, System &sys)
-	{
-		auto membrane_view = s.template view<MembraneState::size(), 0>();
-		auto current_source_view = s.template view<CurrentSourceState::size(),
-		                                           MembraneState::size()>();
-
-		m_membrane.handle_discontinuity(t, membrane_view, sys);
-		m_current_source.handle_discontinuity(t, current_source_view, sys);
-	}
-
-	template <typename State, typename System>
-	void update(Time t, State &s, System &sys)
-	{
-		auto membrane_view = s.template view<MembraneState::size(), 0>();
-		auto current_source_view = s.template view<CurrentSourceState::size(),
-		                                           MembraneState::size()>();
-
-		m_membrane.update(t, membrane_view, sys);
-		m_current_source.update(t, current_source_view, sys);
+		membrane().init(t, s, sys);
+		current_source().init(t, s, sys);
 	}
 
 	template <typename State, typename System>
 	Current current(const State &s, const System &sys) const
 	{
-		return m_current_source.current(
+		return current_source().current(
 		    s.template view<CurrentSourceState::size(),
 		                    MembraneState::size()>(),
 		    sys);
@@ -293,26 +192,8 @@ public:
 	template <typename State, typename System>
 	Voltage voltage(const State &s, const System &sys) const
 	{
-		return m_membrane.voltage(s.template view<MembraneState::size(), 0>(),
+		return membrane().voltage(s.template view<MembraneState::size(), 0>(),
 		                          sys);
-	}
-
-	template <typename State2, typename System>
-	State df(const State2 &s, const System &sys) const
-	{
-		State res;
-
-		// Calculate the derivative of the neuron
-		res.membrane_state().assign(
-		    m_membrane.df(s.template view<MembraneState::size(), 0>(), sys));
-
-		// Calculate the derivative of the current source
-		res.current_source_state().assign(
-		    m_current_source.df(s.template view<CurrentSourceState::size(),
-		                                        MembraneState::size()>(),
-		                        sys));
-
-		return res;
 	}
 };
 
