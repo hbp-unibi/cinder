@@ -179,7 +179,7 @@ private:
 	template <typename State>
 	Real error(State errVec) const
 	{
-		return (errVec * invETar).L2Norm();
+		return (errVec * State::norm() * invETar).L2Norm();
 	}
 
 public:
@@ -189,7 +189,7 @@ public:
 	 *
 	 * @param err is the target integration error.
 	 */
-	AdaptiveIntegratorBase(Real eTar = 0.01e-6) : invETar(1.0 / eTar)
+	AdaptiveIntegratorBase(Real eTar = 1e-6) : invETar(1.0 / eTar)
 	{
 		reset();
 	}

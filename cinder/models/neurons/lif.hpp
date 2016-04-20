@@ -38,6 +38,8 @@ namespace cinder {
  */
 struct LIFState : public VectorBase<LIFState, Real, 1> {
 	using VectorBase<LIFState, Real, 1>::VectorBase;
+
+	static constexpr LIFState norm() { return LIFState({1e3}); }
 };
 
 /**

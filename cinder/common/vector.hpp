@@ -406,6 +406,8 @@ public:
 	using Self = VectorBase<Inst_, T, Size>;
 	using Inst = Inst_;
 
+	constexpr std::array<T, Size> as_array() const { return m_arr; }
+
 	/**
 	 * Default constructor. Default-initializes all vector elements.
 	 */
@@ -428,6 +430,35 @@ class Vector final : public VectorBase<Vector<T, Size>, T, Size> {
 public:
 	using VectorBase<Vector, T, Size>::VectorBase;
 };
+
+/* See http://stackoverflow.com/questions/25068481/c11-constexpr-flatten-list-of-stdarray-into-array */
+
+template <size_t... Is>
+struct seq {
+};
+template <size_t N, size_t... Is>
+struct gen_seq : gen_seq<N - 1, N - 1, Is...> {
+};
+template <size_t... Is>
+struct gen_seq<0, Is...> : seq<Is...> {
+};
+
+template <typename T, size_t N1, size_t... I1, size_t N2, size_t... I2>
+// Expansion pack
+constexpr std::array<T, N1 + N2> concat(const std::array<T, N1> &a1,
+                                        const std::array<T, N2> &a2,
+                                        seq<I1...>, seq<I2...>)
+{
+	return {a1[I1]..., a2[I2]...};
+}
+
+template <typename T, size_t N1, size_t N2>
+// Initializer for the recursion
+constexpr std::array<T, N1 + N2> concat(const std::array<T, N1> &a1,
+                                        const std::array<T, N2> &a2)
+{
+	return concat(a1, a2, gen_seq<N1>{}, gen_seq<N2>{});
+}
 
 #define NAMED_VECTOR_ELEMENT(NAME, IDX)         \
 	static constexpr size_t idx_##NAME = IDX;   \

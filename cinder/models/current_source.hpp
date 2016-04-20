@@ -64,6 +64,8 @@ struct CurrentSourceBase : public ODEBase<StateImpl> {
  */
 struct NullState : public VectorBase<NullState, Real, 0> {
 	using VectorBase<NullState, Real, 0>::VectorBase;
+
+	static constexpr NullState norm() { return NullState(); }
 };
 
 /**
@@ -71,6 +73,11 @@ struct NullState : public VectorBase<NullState, Real, 0> {
  */
 struct SingleCurrentState : public VectorBase<SingleCurrentState, Real, 1> {
 	using VectorBase<SingleCurrentState, Real, 1>::VectorBase;
+
+	static constexpr SingleCurrentState norm()
+	{
+		return SingleCurrentState({1e9});
+	}
 };
 
 /**
@@ -182,7 +189,24 @@ public:
 	 * State vector representing the entire system.
 	 */
 	class State : public VectorBase<State, Real, internal::dim<T...>()> {
+	private:
+		template <size_t I>
+		static constexpr auto norm_impl()
+		{
+			return std::array<Real, 0>();
+		}
+
+		template <size_t I, typename T0, typename... Ts>
+		static constexpr auto norm_impl()
+		{
+			return concat<Real>(T0::State::norm().as_array(),
+			                    norm_impl<0, Ts...>());
+		}
+
+	public:
 		using VectorBase<State, Real, internal::dim<T...>()>::VectorBase;
+
+		static constexpr State norm() { return State(norm_impl<0, T...>()); }
 	};
 
 private:

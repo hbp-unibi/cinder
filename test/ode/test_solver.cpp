@@ -37,6 +37,10 @@ namespace {
 struct SawtoothODE {
 	struct State : public VectorBase<State, Real, 2> {
 		using VectorBase<State, Real, 2>::VectorBase;
+
+		constexpr static State norm() {
+			return State({1.0, 1.0});
+		}
 	};
 
 	template <typename State2, typename System>

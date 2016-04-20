@@ -52,6 +52,12 @@ public:
 	               MembraneState_::size() + CurrentSourceState_::size()>;
 	using Base::Base;
 
+	static constexpr NeuronState norm()
+	{
+		return concat<Real>(MembraneState::norm().as_array(),
+		              CurrentSourceState::norm().as_array());
+	}
+
 	/**
 	 * Returns a view at the neuron state vector.
 	 */
