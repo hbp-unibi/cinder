@@ -50,7 +50,7 @@ struct IzhikevichState : public VectorBase<IzhikevichState, Real, 2> {
 
 /**
  * IzhikevichParameters is the parameter vector which contains the parameters
- * of the Izhikevich membrane. Note that the Izhikevich parameters are used 
+ * of the Izhikevich membrane. Note that the Izhikevich parameters are used
  * without any units. While considerably sloppy, this allows to directly use
  * parameter sets provided by Izhikevich and to stay compatible with PyNN.
  */
@@ -82,6 +82,13 @@ struct IzhikevichParameters : public VectorBase<IzhikevichParameters, Real, 4> {
 	static constexpr RealTime tau_refrac() { return RealTime(); }
 
 	/**
+	 * Returns the resting potential -- the Izhikevich model does not possess an
+	 * explicit refractory period, so zero is returned. Used by the MembraneBase
+	 * class.
+	 */
+	static constexpr Voltage v_rest() { return -70_mV; }
+
+	/**
 	 * Returns the reset potential in volt. Used by the SpikingMembraneBase
 	 * class.
 	 */
@@ -92,6 +99,12 @@ struct IzhikevichParameters : public VectorBase<IzhikevichParameters, Real, 4> {
 	 * fixed in the Izhikevich model. Used by the SpikingMembraneBase class.
 	 */
 	static constexpr Voltage v_thresh() { return 30_mV; }
+
+	/**
+	 * Returns the spike potential in volt. The threshold potential is fixed in
+	 * the Izhikevich model. Used by the SpikingMembraneBase class.
+	 */
+	static constexpr Voltage v_spike() { return v_thresh(); }
 };
 
 /**
@@ -100,14 +113,19 @@ struct IzhikevichParameters : public VectorBase<IzhikevichParameters, Real, 4> {
 template <typename SpikeCallback_>
 class Izhikevich
     : public SpikingMembraneBase<Izhikevich<SpikeCallback_>, IzhikevichState,
-                                 IzhikevichParameters, SpikeCallback_, false> {
+                                 IzhikevichParameters, SpikeCallback_, true> {
 private:
+	friend class SpikingMembraneBase<Izhikevich<SpikeCallback_>,
+	                                 IzhikevichState, IzhikevichParameters,
+	                                 SpikeCallback_, true>;
+
 	using Base =
 	    SpikingMembraneBase<Izhikevich<SpikeCallback_>, IzhikevichState,
-	                        IzhikevichParameters, SpikeCallback_, false>;
+	                        IzhikevichParameters, SpikeCallback_, true>;
 
-	template<typename State, typename System>
-	void handle_output_spike(Time, State &s, System &) {
+	template <typename State, typename System>
+	void handle_output_spike(Time, State &s, System &)
+	{
 		s[1] += p().d();
 	}
 
@@ -115,16 +133,20 @@ public:
 	using Base::Base;
 	using Base::p;
 
+	IzhikevichState s0() const
+	{
+		return IzhikevichState({p().v_rest(), Real(-14.0)});
+	}
+
 	template <typename State, typename System>
 	IzhikevichState df(const State &s, const System &sys) const
 	{
 		const Real v = s[0] * Real(1e3);  // Convert V to mV
 		const Real u = s[1];
 		return IzhikevichState(
-		    {(Real(0.04) * v * v + Real(5.0) * v + Real(140.0) - u) *
-		             Real(1e-3) +
+		    {(Real(0.04) * v * v + Real(5.0) * v + Real(140.0) - u) +
 		         sys.ode().current(s, sys),
-		     p().a() * (p().b() * v - u)});
+		     p().a() * (p().b() * v - u) * Real(1e3)});
 	}
 };
 }

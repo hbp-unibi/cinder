@@ -26,8 +26,9 @@ include_directories(
 add_executable(test_cinder
 	common/test_vector
 	models/test_current_source
-	models/neurons/test_lif
 	models/neurons/test_adex
+	models/neurons/test_izhikevich
+	models/neurons/test_lif
 	models/synapses/test_cur_alpha
 	models/synapses/test_cur_exp
 	models/synapses/test_delta
