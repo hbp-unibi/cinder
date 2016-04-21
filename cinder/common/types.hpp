@@ -48,8 +48,12 @@ using Real = double;
 #elif CINDER_REAL_WIDTH == 10
 using Real = long double;
 #elif CINDER_REAL_WIDTH == 16
+extern "C" {
+#include <quadmath.h>
+}
 using Real = __float128;
 #else
+using Real = float;
 #error Invalid value for CINDER_REAL_WIDTH supplied!
 #endif
 

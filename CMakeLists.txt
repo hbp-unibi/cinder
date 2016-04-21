@@ -51,6 +51,10 @@ endif()
 
 include_directories(${CMAKE_SOURCE_DIR})
 
+# Add configuration option for setting the width of the floating point values
+set(CINDER_REAL_WIDTH 4 CACHE FILEPATH "Width of the floating point values in bytes (one of 4, 8, 10, 16)")
+add_definitions(-DCINDER_REAL_WIDTH=${CINDER_REAL_WIDTH})
+
 # Compile the library itself
 add_library(cinder
 	cinder/common/fast_math
