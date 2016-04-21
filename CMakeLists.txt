@@ -65,8 +65,9 @@ add_library(cinder
 	cinder/models/current_source
 	cinder/models/neuron
 	cinder/models/synapse
-	cinder/models/neurons/lif
 	cinder/models/neurons/adex
+	cinder/models/neurons/izhikevich
+	cinder/models/neurons/lif
 	cinder/models/synapses/cond_alpha
 	cinder/models/synapses/cond_exp
 	cinder/models/synapses/cur_alpha
