@@ -36,8 +36,7 @@ TEST(izhikevich, delta)
 	                                        34.327_ms, 41.233_ms};
 
 	DormandPrinceIntegrator integrator;
-	std::ofstream os("izhikevich_delta.csv");
-	CSVRecorder recorder(os);
+	NullRecorder recorder;
 	NullController controller;
 	std::vector<Time> spikes;
 
