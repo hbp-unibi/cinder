@@ -96,38 +96,47 @@ public:
 	/**
 	 * Allows to implicitly convert Quantity to the underlying value type.
 	 */
-	operator T() const { return m_val; }
+	constexpr operator T() const { return m_val; }
 
-	T v() const { return m_val; }
+	constexpr T v() const { return m_val; }
 
-	friend Time operator+(const Self &q) { return Time(q.v()); }
-	friend Impl operator-(const Self &q) { return Impl(-q.v()); }
+	friend constexpr Time operator+(const Self &q) { return Time(q.v()); }
+	friend constexpr Impl operator-(const Self &q) { return Impl(-q.v()); }
 
-	friend Impl operator+(const Self &q1, const Self &q2)
+	friend constexpr Impl operator+(const Self &q1, const Self &q2)
 	{
 		return Impl(q1.v() + q2.v());
 	}
 
-	friend Impl operator-(const Self &q1, const Self &q2)
+	friend constexpr Impl operator-(const Self &q1, const Self &q2)
 	{
 		return Impl(q1.v() - q2.v());
 	}
 
-	friend T operator/(const Self &q1, const Self &q2)
+	friend constexpr T operator/(const Self &q1, const Self &q2)
 	{
 		return T(q1.v() / q2.v());
 	}
 
-	friend Impl operator/(const Self &q, T s) { return Impl(q.v() / s); }
-	friend Impl operator*(const Self &q, T s) { return Impl(q.v() * s); }
-	friend Impl operator*(T s, const Self &q) { return Impl(s * q.v()); }
+	friend constexpr Impl operator/(const Self &q, T s)
+	{
+		return Impl(q.v() / s);
+	}
+	friend constexpr Impl operator*(const Self &q, T s)
+	{
+		return Impl(q.v() * s);
+	}
+	friend constexpr Impl operator*(T s, const Self &q)
+	{
+		return Impl(s * q.v());
+	}
 
-	bool operator==(const Self &o) const { return v() == o.v(); }
-	bool operator!=(const Self &o) const { return v() != o.v(); }
-	bool operator<(const Self &o) const { return v() < o.v(); }
-	bool operator<=(const Self &o) const { return v() <= o.v(); }
-	bool operator>(const Self &o) const { return v() > o.v(); }
-	bool operator>=(const Self &o) const { return v() >= o.v(); }
+	bool constexpr operator==(const Self &o) const { return v() == o.v(); }
+	bool constexpr operator!=(const Self &o) const { return v() != o.v(); }
+	bool constexpr operator<(const Self &o) const { return v() < o.v(); }
+	bool constexpr operator<=(const Self &o) const { return v() <= o.v(); }
+	bool constexpr operator>(const Self &o) const { return v() > o.v(); }
+	bool constexpr operator>=(const Self &o) const { return v() >= o.v(); }
 };
 
 /**
