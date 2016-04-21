@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <cinder/models/synapses/dirac.hpp>
+#include <cinder/models/synapses/delta.hpp>
 
 namespace cinder {
 // Do nothing here, just make sure the header compiles

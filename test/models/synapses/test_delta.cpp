@@ -21,7 +21,7 @@
 
 #include "gtest/gtest.h"
 
-#include <cinder/models/synapses/dirac.hpp>
+#include <cinder/models/synapses/delta.hpp>
 #include <cinder/models/neurons/lif.hpp>
 #include <cinder/integrator/dormand_prince.hpp>
 #include <cinder/ode/controller.hpp>
@@ -33,7 +33,7 @@ namespace {
 static const std::vector<Spike> input_spikes = {10_ms, 100_ms, 300_ms};
 using ODE = ODEBase<LIFState>;
 
-struct DiracTestRecorder {
+struct DeltaTestRecorder {
 	Real calc_expected_voltage(Time t, Voltage pulse_v,
 	                           const std::vector<Spike> &spikes)
 	{
@@ -72,12 +72,12 @@ struct DiracTestRecorder {
 };
 }
 
-TEST(dirac, basic)
+TEST(delta, basic)
 {
-	MultiODE<ODE, Dirac> ode({}, Dirac(0.5_V, input_spikes));
+	MultiODE<ODE, Delta> ode({}, Delta(0.5_V, input_spikes));
 
 	DormandPrinceIntegrator integrator;
-	DiracTestRecorder recorder;
+	DeltaTestRecorder recorder;
 	NullController controller;
 
 	make_solver(ode, integrator, recorder, controller)

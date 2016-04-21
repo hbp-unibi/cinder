@@ -17,17 +17,17 @@
  */
 
 /**
- * @file dirac.hpp
+ * @file delta.hpp
  *
- * Synapse which implements a simple current pulse (voltage step).
+ * Synapse which implements a simple dirac-delta current pulse (voltage step).
  *
  * @author Andreas Stöckel
  */
 
 #pragma once
 
-#ifndef CINDER_MODELS_SYNAPSES_DIRAC_HPP
-#define CINDER_MODELS_SYNAPSES_DIRAC_HPP
+#ifndef CINDER_MODELS_SYNAPSES_DELTA_HPP
+#define CINDER_MODELS_SYNAPSES_DELTA_HPP
 
 #include <cinder/models/synapse.hpp>
 
@@ -35,9 +35,9 @@ namespace cinder {
 /**
  * Synapse type which increases the membrane potential by a fixed value.
  */
-struct Dirac : public SynapseBase<Dirac, NullState> {
+struct Delta : public SynapseBase<Delta, NullState> {
 private:
-	friend SynapseBase<Dirac, NullState>;
+	friend SynapseBase<Delta, NullState>;
 
 	Voltage m_pulse_v;
 
@@ -49,9 +49,9 @@ private:
 	}
 
 public:
-	Dirac(Voltage pulse_v,
+	Delta(Voltage pulse_v,
 	        const std::vector<Spike> &input_spikes = std::vector<Spike>())
-	    : SynapseBase<Dirac, NullState>(input_spikes),
+	    : SynapseBase<Delta, NullState>(input_spikes),
 	      m_pulse_v(pulse_v)
 	{
 	}
@@ -70,4 +70,4 @@ public:
 };
 }
 
-#endif /* CINDER_MODELS_SYNAPSES_DIRAC_HPP */
+#endif /* CINDER_MODELS_SYNAPSES_DELTA_HPP */
