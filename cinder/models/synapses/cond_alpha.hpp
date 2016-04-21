@@ -71,7 +71,7 @@ private:
 
 	Real m_w;
 	Real m_tau_inv;
-	Real m_e_rev;
+	Voltage m_e_rev;
 
 	template <typename State2, typename System>
 	void process_spike(const Spike &spike, Time, State2 &s, System &) const
@@ -80,7 +80,7 @@ private:
 	}
 
 public:
-	CondAlpha(Current w, Time tau, Voltage e_rev,
+	CondAlpha(Conductance w, Time tau, Voltage e_rev,
 	          const std::vector<Spike> &input_spikes = std::vector<Spike>())
 	    : SynapseBase<CondAlpha, AlphaConductanceState>(input_spikes),
 	      m_w(w.v() * Real(2.718281828)),
