@@ -33,6 +33,7 @@
 #include <tuple>
 
 #include <cinder/common/time.hpp>
+#include <cinder/common/types.hpp>
 
 namespace cinder {
 /**
@@ -64,6 +65,28 @@ struct NullController {
 	template <typename State, typename System>
 	static ControllerResult control(Time, const State &, const System &)
 	{
+		return ControllerResult::CONTINUE;  // Go on forever
+	}
+};
+
+/**
+ * Controller type which runs the simulation until the neuron settles to its
+ * resting potential without any currents flowing.
+ */
+struct NeuronController {
+	template <typename State, typename System>
+	static ControllerResult control(Time, const State &s, const System &sys)
+	{
+		static constexpr Voltage MAX_DELTA_V = 1_uV;
+		static constexpr Current MAX_DELTA_I = 1_pA;
+
+		// Abort if there are no more input spikes, the neuron membrane voltage
+		// is near the resting potential and the current is near zero.
+		if (std::abs(sys.ode().voltage(s, sys) -
+		             sys.ode().membrane().p().v_rest()) < MAX_DELTA_V.v() &&
+		    std::abs(sys.ode().current(s, sys) < MAX_DELTA_I.v())) {
+			return ControllerResult::MAY_CONTINUE;
+		}
 		return ControllerResult::CONTINUE;  // Go on forever
 	}
 };
