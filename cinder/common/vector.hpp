@@ -436,7 +436,7 @@ public:
 	Inst &NAME(value_type x)                    \
 	{                                           \
 		(*this)[IDX] = x;                       \
-		static_cast<Inst &>(*this);             \
+		return static_cast<Inst &>(*this);      \
 	}                                           \
 	value_type &NAME() { return (*this)[IDX]; } \
 	value_type NAME() const { return (*this)[IDX]; }
