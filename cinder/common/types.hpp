@@ -151,6 +151,7 @@ struct Capacitance : public Quantity<Capacitance, Real> {
 
 struct RealTime : public Quantity<RealTime, Real> {
 	using Quantity<RealTime, Real>::Quantity;
+	constexpr RealTime() : Quantity<RealTime, Real>() {}
 	constexpr RealTime(Time t) : Quantity<RealTime, Real>(t.sec()) {}
 };
 
