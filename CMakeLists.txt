@@ -49,11 +49,12 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 
-include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 
 # Add configuration option for setting the width of the floating point values
 set(CINDER_REAL_WIDTH 4 CACHE FILEPATH "Width of the floating point values in bytes (one of 4, 8, 10, 16)")
-add_definitions(-DCINDER_REAL_WIDTH=${CINDER_REAL_WIDTH})
+
+configure_file(cinder/config.h.in cinder/config.h)
 
 # Compile the library itself
 add_library(cinder
@@ -89,6 +90,16 @@ install(
 	DIRECTORY ${CMAKE_SOURCE_DIR}/cinder
 	DESTINATION include
 	FILES_MATCHING PATTERN "*.hpp"
+)
+install(
+	DIRECTORY ${CMAKE_BINARY_DIR}/cinder
+	DESTINATION include
+	FILES_MATCHING PATTERN "*.h"
+)
+install(
+	FILES ${CMAKE_SOURCE_DIR}/cmake/FindCinder.cmake
+	DESTINATION share/cmake/Cinder/
+	RENAME CinderConfig.cmake
 )
 
 # Submodules

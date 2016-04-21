@@ -29,6 +29,7 @@
 #ifndef CINDER_COMMON_TYPES_HPP
 #define CINDER_COMMON_TYPES_HPP
 
+#include <cinder/config.h>
 #include <cinder/common/time.hpp>
 
 namespace cinder {
