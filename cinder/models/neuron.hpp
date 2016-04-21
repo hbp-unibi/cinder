@@ -135,7 +135,7 @@ public:
 	template <typename State, typename System>
 	void handle_discontinuity(Time t, State &, System &)
 	{
-		if (t >= m_ref_end) {
+		if (m_ref_end != MAX_TIME && t > m_ref_end) {
 			m_ref_end = MAX_TIME;
 		}
 	}
@@ -149,10 +149,14 @@ public:
 		const Voltage v_th = ArtificialSpike_ ? p().v_thresh() : p().v_spike();
 		if (s[0] >= v_th) {
 			// Plan the end of the refractory period
-			m_ref_end = t + Time::sec(p().tau_refrac());
+			const RealTime tau_refrac = p().tau_refrac();
+			if (tau_refrac > 0) {
+				m_ref_end = t + Time::sec(tau_refrac);
+			}
 
+			// Set the membrane potential to the spike potential if "artificial"
+			// spike should be produced (for the LIF model)
 			if (ArtificialSpike_) {
-				// Set the membrane potential to the spike potential
 				s[0] = p().v_spike();
 			}
 			sys.recorder().record(t, sys.s(), sys);
