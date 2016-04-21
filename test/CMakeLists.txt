@@ -15,7 +15,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # CMake version and project metadata
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.2)
 project(cinder)
 
 include_directories(
@@ -35,7 +35,7 @@ add_executable(test_cinder
 )
 target_link_libraries(test_cinder
 	cinder
-	pthread
+	-pthread
 	${GTEST_LIBRARIES}
 )
 add_test(test_cinder test_cinder)
