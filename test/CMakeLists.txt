@@ -28,6 +28,7 @@ add_executable(test_cinder
 	models/test_current_source
 	models/neurons/test_lif
 	models/neurons/test_adex
+	models/synapses/test_cur_alpha
 	models/synapses/test_cur_exp
 	models/synapses/test_delta
 	ode/test_solver
