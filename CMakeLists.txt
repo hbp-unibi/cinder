@@ -63,8 +63,10 @@ add_library(cinder
 	cinder/models/synapse
 	cinder/models/neurons/lif
 	cinder/models/neurons/adex
-	cinder/models/synapses/cur_exp
+	cinder/models/synapses/cond_alpha
 	cinder/models/synapses/cond_exp
+	cinder/models/synapses/cur_alpha
+	cinder/models/synapses/cur_exp
 	cinder/models/synapses/delta
 	cinder/integrator/dormand_prince
 	cinder/integrator/euler
