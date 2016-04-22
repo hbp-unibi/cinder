@@ -94,7 +94,7 @@ struct NeuronController {
 		// is near the resting potential and the current is near zero.
 		if (std::abs(sys.ode().voltage(s, sys) -
 		             sys.ode().membrane().p().v_rest()) < MAX_DELTA_V.v() &&
-		    std::abs(sys.ode().current(s, sys) < MAX_DELTA_I.v())) {
+		    std::abs(sys.ode().current(s, sys)) < MAX_DELTA_I.v()) {
 			return ControllerResult::MAY_CONTINUE;
 		}
 		return ControllerResult::CONTINUE;  // Go on forever
