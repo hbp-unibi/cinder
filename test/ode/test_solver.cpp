@@ -38,7 +38,7 @@ struct SawtoothODE {
 	struct State : public VectorBase<State, Real, 2> {
 		using VectorBase<State, Real, 2>::VectorBase;
 
-		constexpr static State norm() {
+		constexpr static State scale() {
 			return State({1.0, 1.0});
 		}
 	};

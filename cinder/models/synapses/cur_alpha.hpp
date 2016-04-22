@@ -55,7 +55,7 @@ namespace cinder {
 struct AlphaCurrentState : public VectorBase<AlphaCurrentState, Real, 2> {
 	using VectorBase<AlphaCurrentState, Real, 2>::VectorBase;
 
-	static constexpr AlphaCurrentState norm()
+	static constexpr AlphaCurrentState scale()
 	{
 		return AlphaCurrentState({1e9, 1e9});
 	}

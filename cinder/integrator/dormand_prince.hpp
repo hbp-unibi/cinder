@@ -179,7 +179,7 @@ private:
 	template <typename State>
 	Real error(State errVec) const
 	{
-		return (errVec * State::norm() * invETar).L2Norm();
+		return (errVec * State::scale() * invETar).L2Norm();
 	}
 
 public:

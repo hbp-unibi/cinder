@@ -162,24 +162,24 @@ public:
 	class State : public VectorBase<State, Real, internal::dim<T...>()> {
 	private:
 		template <size_t I>
-		static constexpr auto norm_impl()
+		static constexpr auto scale_impl()
 		{
 			return std::array<Real, 0>();
 		}
 
 		template <size_t I, typename T0, typename... Ts>
-		static constexpr auto norm_impl()
+		static constexpr auto scale_impl()
 		{
-			return internal::concat<Real>(T0::State::norm().as_array(),
-			                              norm_impl<0, Ts...>());
+			return internal::concat<Real>(T0::State::scale().as_array(),
+			                              scale_impl<0, Ts...>());
 		}
 
 	public:
 		using VectorBase<State, Real, internal::dim<T...>()>::VectorBase;
 
-		static constexpr State norm()
+		static constexpr State scale()
 		{
-			return State(norm_impl<0, T...>());
+			return State(scale_impl<0, T...>());
 		}
 	};
 

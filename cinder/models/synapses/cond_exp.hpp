@@ -39,7 +39,7 @@ struct SingleConductanceState
     : public VectorBase<SingleConductanceState, Real, 1> {
 	using VectorBase<SingleConductanceState, Real, 1>::VectorBase;
 
-	static constexpr SingleConductanceState norm() { return SingleConductanceState({1e6}); }
+	static constexpr SingleConductanceState scale() { return SingleConductanceState({1e6}); }
 };
 
 /**

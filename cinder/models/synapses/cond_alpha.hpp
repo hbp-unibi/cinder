@@ -56,7 +56,7 @@ struct AlphaConductanceState
     : public VectorBase<AlphaConductanceState, Real, 2> {
 	using VectorBase<AlphaConductanceState, Real, 2>::VectorBase;
 
-	static constexpr AlphaConductanceState norm()
+	static constexpr AlphaConductanceState scale()
 	{
 		return AlphaConductanceState({1e6, 1e6});
 	}
