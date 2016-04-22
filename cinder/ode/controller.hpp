@@ -59,14 +59,24 @@ enum class ControllerResult {
 };
 
 /**
- * Controller type which does not prematurely abort the neuron simulation.
+ * Controller class which returns a constant result.
+ *
+ * @tparam Result is the ControllerResult that should be constantly returned
+ * by the controller.
  */
-struct NullController {
+template <ControllerResult Result>
+struct ConstantController {
 	template <typename State, typename System>
 	static ControllerResult control(Time, const State &, const System &)
 	{
-		return ControllerResult::CONTINUE;  // Go on forever
+		return Result;
 	}
+};
+
+/**
+ * Controller type which does not prematurely abort the neuron simulation.
+ */
+struct NullController : public ConstantController<ControllerResult::CONTINUE> {
 };
 
 /**
@@ -90,6 +100,106 @@ struct NeuronController {
 		return ControllerResult::CONTINUE;  // Go on forever
 	}
 };
+
+/**
+ * Controller class which can be used to describe an external abort condition
+ * using a lambda expression.
+ *
+ * @tparam F is the type of the lambda expression.
+ * @tparam DefaultResult is the result that should be returned when the lambda
+ * returns true.
+ */
+template <typename F,
+          ControllerResult DefaultResult = ControllerResult::MAY_CONTINUE>
+struct ConditionedController {
+private:
+	F m_f;
+
+public:
+	ConditionedController(F f) : m_f(std::move(f)) {}
+
+	template <typename State, typename System>
+	ControllerResult control(Time, const State &, const System &)
+	{
+		if (m_f()) {
+			return DefaultResult;
+		}
+		return ControllerResult::ABORT;
+	}
+};
+
+/**
+ * Creates a new ConditionedController instance.
+ */
+template <typename F,
+          ControllerResult DefaultResult = ControllerResult::MAY_CONTINUE>
+static ConditionedController<F, DefaultResult> make_conditioned_controller(
+    const F &f)
+{
+	return ConditionedController<F, DefaultResult>(f);
+}
+
+/**
+ * Lowest recursion level of the MultiController class. Returns "MAY_CONTINUE".
+ */
+template <typename... Controllers>
+class MultiController
+    : public ConstantController<ControllerResult::MAY_CONTINUE> {
+};
+
+/**
+ * Class used to cascade a number of Recorders. Use the makeMultiRecorder()
+ * method to conveniently construct a Recorder consisting of multiple recorders.
+ */
+template <typename Controller, typename... Controllers>
+class MultiController<Controller, Controllers...>
+    : MultiController<Controllers...> {
+private:
+	Controller &controller;
+
+public:
+	MultiController(Controller &controller, Controllers &... cs)
+	    : MultiController<Controllers...>(cs...), controller(controller)
+	{
+	}
+
+	template <typename State, typename System>
+	ControllerResult control(Time t, const State &s, const System &sys)
+	{
+		// Evaluate this controller -- abort if it forces abortion
+		const ControllerResult res1 = controller.control(t, s, sys);
+		if (res1 == ControllerResult::ABORT) {
+			return ControllerResult::ABORT;
+		}
+
+		// Evaluate the other controllers -- relay abortion
+		const ControllerResult res2 =
+		    MultiController<Controllers...>::control(t, s, sys);
+		if (res2 == ControllerResult::ABORT) {
+			return ControllerResult::ABORT;
+		}
+
+		// If one controller wants to continue, continue
+		if (res1 == ControllerResult::CONTINUE ||
+		    res2 == ControllerResult::CONTINUE) {
+			return ControllerResult::CONTINUE;
+		}
+
+		// Otherwise output "MAY_CONTINUE"
+		return ControllerResult::MAY_CONTINUE;
+	}
+};
+
+/**
+ * Helper function which can be used to conveniently create a MultiRecorder
+ * instance. Simply pass references to all recorders that should be used to the
+ * method and store the result in an auto variable.
+ */
+template <typename... Controllers>
+MultiController<Controllers...> make_multi_controller(Controllers &... cs)
+{
+	return MultiController<Controllers...>(cs...);
+}
 }
 
 #endif /* CINDER_ODE_CONTROLLER_HPP */

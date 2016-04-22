@@ -33,6 +33,7 @@ add_executable(test_cinder
 	models/synapses/test_cur_exp
 	models/synapses/test_delta
 	ode/test_solver
+	ode/test_controller
 )
 target_link_libraries(test_cinder
 	cinder
