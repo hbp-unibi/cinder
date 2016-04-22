@@ -53,9 +53,12 @@ struct IzhikevichState : public VectorBase<IzhikevichState, Real, 2> {
  * of the Izhikevich membrane. Note that the Izhikevich parameters are used
  * without any units. While considerably sloppy, this allows to directly use
  * parameter sets provided by Izhikevich and to stay compatible with PyNN.
+ *
+ * The membrane capcitance parameter cm is used to convert external currents to
+ * V/s.
  */
-struct IzhikevichParameters : public VectorBase<IzhikevichParameters, Real, 4> {
-	using VectorBase<IzhikevichParameters, Real, 4>::VectorBase;
+struct IzhikevichParameters : public VectorBase<IzhikevichParameters, Real, 5> {
+	using VectorBase<IzhikevichParameters, Real, 5>::VectorBase;
 
 	/**
 	 * Default constructor. Initializes the neuron to the values also used in
@@ -67,12 +70,14 @@ struct IzhikevichParameters : public VectorBase<IzhikevichParameters, Real, 4> {
 		b(0.2);
 		c(-65.0);
 		d(2.0);
+		cm(1_nF);
 	}
 
 	NAMED_VECTOR_ELEMENT(a, 0);
 	NAMED_VECTOR_ELEMENT(b, 1);
 	NAMED_VECTOR_ELEMENT(c, 2);
 	NAMED_VECTOR_ELEMENT(d, 3);
+	NAMED_VECTOR_ELEMENT(cm, 4);
 
 	/**
 	 * Returns the explicit refractory period -- the Izhikevich model does not
@@ -123,6 +128,8 @@ private:
 	    SpikingMembraneBase<Izhikevich<SpikeCallback_>, IzhikevichState,
 	                        IzhikevichParameters, SpikeCallback_, true>;
 
+	Real m_cm_inv;
+
 	template <typename State, typename System>
 	void handle_output_spike(Time, State &s, System &)
 	{
@@ -132,6 +139,14 @@ private:
 public:
 	using Base::Base;
 	using Base::p;
+
+	template <typename State, typename System>
+	void init(Time, const State &, const System &)
+	{
+		// Use the inverse of some values in order to avoid divisions in the
+		// df code.
+		m_cm_inv = 1.0 / p().cm();
+	}
 
 	IzhikevichState s0() const
 	{
@@ -145,7 +160,7 @@ public:
 		const Real u = s[1];
 		return IzhikevichState(
 		    {(Real(0.04) * v * v + Real(5.0) * v + Real(140.0) - u) +
-		         sys.ode().current(s, sys),
+		         sys.ode().current(s, sys) * m_cm_inv,
 		     p().a() * (p().b() * v - u) * Real(1e3)});
 	}
 };
