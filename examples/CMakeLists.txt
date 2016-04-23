@@ -18,3 +18,10 @@
 cmake_minimum_required(VERSION 3.2)
 project(cinder)
 
+add_executable(izhikevich_cond_alpha
+	izhikevich_cond_alpha
+)
+target_link_libraries(izhikevich_cond_alpha
+	cinder
+)
+
