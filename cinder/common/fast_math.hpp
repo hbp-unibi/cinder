@@ -46,18 +46,6 @@
 namespace cinder {
 namespace fast {
 
-/**
- * Class used to enable floating point flush-to-zero (FTZ).
- */
-struct InitFTZ {
-	InitFTZ();
-};
-
-/**
- * Global variable used to initialize FTZ
- */
-extern InitFTZ cinder_init_ftz;
-
 // This is an adapted version of the source code that can be obtained at
 // https://code.google.com/p/fastapprox/ . It was reduced to the fastexp
 // method.

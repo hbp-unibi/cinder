@@ -16,13 +16,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <xmmintrin.h>
-
 #include <cinder/common/fast_math.hpp>
 
 namespace cinder {
 namespace fast {
-InitFTZ::InitFTZ() { _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON); }
-InitFTZ cinder_init_ftz = InitFTZ();
+// Do nothing here, just make sure the header compiles
 }
 }
