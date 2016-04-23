@@ -248,7 +248,7 @@ public:
 			// maximum scale. We're neither using the PI controller proposed in
 			// NR here and approximate S * err^{-1/5} with S / err. Works better
 			// and faster.
-			Real scale = (e == 0.0)
+			Real scale = (e == Real(0.0))
 			                 ? MAX_SCALE
 			                 : std::min(MAX_SCALE, std::max(MIN_SCALE, S / e));
 
@@ -272,7 +272,7 @@ public:
 
 			// If the error is smaller than 1.0 the operation was successful,
 			// abort
-			if (e < 1.0) {
+			if (e < Real(1.0)) {
 				break;
 			}
 
