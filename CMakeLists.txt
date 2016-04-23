@@ -52,7 +52,7 @@ endif()
 include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 
 # Add configuration option for setting the width of the floating point values
-set(CINDER_REAL_WIDTH 4 CACHE FILEPATH "Width of the floating point values in bytes (one of 4, 8, 10, 16)")
+set(CINDER_REAL_WIDTH 4 CACHE STRING "Width of the floating point values in bytes (one of 4, 8, 10, 16)")
 
 configure_file(cinder/config.h.in cinder/config.h)
 
