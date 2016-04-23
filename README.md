@@ -21,8 +21,8 @@ _Cinder_ requires a C++14 compatible compiler such as `GCC 5` or `clang 3.6`,
 as well as `cmake 3.2`. You can build and install _Cinder_ using the following
 commands:
 
-```
-git clone -depth 1 https://github.com/hbp-sanncs/cinder && cd cinder
+```bash
+git clone --depth 1 https://github.com/hbp-sanncs/cinder && cd cinder
 mkdir build && cd build
 cmake .. && make && make test
 sudo make install
