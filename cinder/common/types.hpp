@@ -35,7 +35,7 @@
 namespace cinder {
 
 #if !defined(CINDER_REAL_WIDTH)
-#define CINDER_REAL_WIDTH 4
+#define CINDER_REAL_WIDTH 8
 #endif
 
 /**
@@ -107,6 +107,16 @@ public:
 	friend constexpr Impl operator+(const Self &q1, const Self &q2)
 	{
 		return Impl(q1.v() + q2.v());
+	}
+
+	constexpr Impl& operator+=(const Self &q) {
+		m_val += q.v();
+		return static_cast<Impl&>(*this);
+	}
+
+	constexpr Impl& operator-=(const Self &q) {
+		m_val -= q.v();
+		return static_cast<Impl&>(*this);
 	}
 
 	friend constexpr Impl operator-(const Self &q1, const Self &q2)

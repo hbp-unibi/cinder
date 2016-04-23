@@ -56,9 +56,9 @@ unusably slow. Enabling optimisation will give you a 100 to 1000 times speedup.
 
 Note that _Cinder_ allows you to use either single or double precision floating
 point numbers by setting the `CINDER_REAL_WIDTH` macro to either "4" or "8".
-Usually, using double precision floating point numbers has close to no negative
-impact on performance. The floating point type used internally by _Cinder_ is
-called `Real`.
+Usually, using double precision (default) floating point numbers has close to no
+negative impact on performance. The floating point type used internally by
+_Cinder_ is called `Real`.
 
 ## Example Code
 
