@@ -90,26 +90,22 @@ struct IzhikevichParameters : public VectorBase<IzhikevichParameters, Real, 5> {
 	 * SpikingMembraneBase class.
 	 */
 	static constexpr RealTime tau_refrac() { return RealTime(); }
-
 	/**
 	 * Returns the resting potential -- the Izhikevich model does not possess an
 	 * explicit refractory period, so zero is returned. Used by the MembraneBase
 	 * class.
 	 */
 	static constexpr Voltage v_rest() { return -70_mV; }
-
 	/**
 	 * Returns the reset potential in volt. Used by the SpikingMembraneBase
 	 * class.
 	 */
 	Voltage v_reset() const { return Voltage(c() * 1e-3); }
-
 	/**
 	 * Returns the threshold potential in volt. The threshold potential is
 	 * fixed in the Izhikevich model. Used by the SpikingMembraneBase class.
 	 */
 	static constexpr Voltage v_thresh() { return 30_mV; }
-
 	/**
 	 * Returns the spike potential in volt. The threshold potential is fixed in
 	 * the Izhikevich model. Used by the SpikingMembraneBase class.
