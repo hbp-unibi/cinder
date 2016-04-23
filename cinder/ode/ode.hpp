@@ -192,13 +192,13 @@ private:
 	 */
 
 	template <typename State2, typename System, size_t I, size_t Offs>
-	void init_impl(Time, const State2 &, const System &) const
+	void init_impl(Time, const State2 &, const System &)
 	{
 	}
 
 	template <typename State2, typename System, size_t I, size_t Offs,
 	          typename T0, typename... Ts>
-	void init_impl(Time t, const State2 &s, const System &sys) const
+	void init_impl(Time t, const State2 &s, const System &sys)
 	{
 		using InnerState = typename T0::State;
 		static constexpr size_t InnerSize = InnerState::size();
