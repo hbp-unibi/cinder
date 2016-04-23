@@ -88,8 +88,10 @@ external function calls. This way, _Cinder_ is magnitudes faster than full
 network simulators simulating a single neuron.
 
 Conceptually, each single neuron simulation is represented by an autonomous
-ordinary differential equation (ODE) which is automatically assembled using
-
+ordinary differential equation (ODE) which is automatically assembled at compile
+time using variadic templates. This single ODE representing the entire neuron,
+including its membrane and current sources, is then solved using a numerical
+differential equation integrator.
 
 ### Implemented neuron models
 

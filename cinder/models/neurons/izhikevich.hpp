@@ -19,9 +19,14 @@
 /**
  * @file izhikevich.hpp
  *
- * Implementation of the Izhikevich neuron model.
+ * Implementation of the Izhikevich neuron model. Note that the currents
+ * injected into the Izhikevich neuron under the assumption of a 1nF membrane
+ * capacitance. In the original Izhikevich model the injected current has no
+ * particular unit -- the capacitance is needed to convert between currents in
+ * ampere and a voltage differential in volts per second.
  *
  * @author Andreas Stöckel
+ * @author Christoph Jenzen
  */
 
 #pragma once
@@ -55,7 +60,7 @@ struct IzhikevichState : public VectorBase<IzhikevichState, Real, 2> {
  * parameter sets provided by Izhikevich and to stay compatible with PyNN.
  *
  * The membrane capcitance parameter cm is used to convert external currents to
- * V/s.
+ * volts per second.
  */
 struct IzhikevichParameters : public VectorBase<IzhikevichParameters, Real, 5> {
 	using VectorBase<IzhikevichParameters, Real, 5>::VectorBase;
