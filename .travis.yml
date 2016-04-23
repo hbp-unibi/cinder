@@ -1,8 +1,8 @@
 language: cpp
 script:
-	- mkdir build_gcc && cd build_gcc && cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCINDER_REAL_WIDTH=4 && make && make test
-	- mkdir build_gcc && cd build_gcc && cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCINDER_REAL_WIDTH=8 && make && make test
-	- mkdir build_gcc && cd build_gcc && cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCINDER_REAL_WIDTH=10 && make && make test
-	- mkdir build_gcc && cd build_gcc && cmake .. -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCINDER_REAL_WIDTH=4 && make && make test
-	- mkdir build_gcc && cd build_gcc && cmake .. -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCINDER_REAL_WIDTH=8 && make && make test
-	- mkdir build_gcc && cd build_gcc && cmake .. -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCINDER_REAL_WIDTH=10 && make && make test
+  - mkdir build_gcc && cd build_gcc && cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCINDER_REAL_WIDTH=4 && make && make test
+  - mkdir build_gcc && cd build_gcc && cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCINDER_REAL_WIDTH=8 && make && make test
+  - mkdir build_gcc && cd build_gcc && cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCINDER_REAL_WIDTH=10 && make && make test
+  - mkdir build_gcc && cd build_gcc && cmake .. -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCINDER_REAL_WIDTH=4 && make && make test
+  - mkdir build_gcc && cd build_gcc && cmake .. -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCINDER_REAL_WIDTH=8 && make && make test
+  - mkdir build_gcc && cd build_gcc && cmake .. -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCINDER_REAL_WIDTH=10 && make && make test
