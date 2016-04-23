@@ -32,13 +32,34 @@ Note that CMake will automatically download and build
 [Google Test](https://github.com/google/googletest) for the integrated
 integration and unit test suite.
 
+## Using Cinder
+
+Basically you only need to make sure that the `cinder` folder within the
+`cinder` repository is in the search path of your C++ compiler, as done by
+calling `sudo make install` in the above script. When using `cmake` for
+your project you can simply include _Cinder_ using
+
+```cmake
+find_package(Cinder REQUIRED)
+include_directories(${CINDER_INCLUDE_DIRS})
+```
+
+If possible, you should use the `-ffast-math` compiler flag for a considerable
+performance boost. Also note that with disabled optimisation (`-O0`) Cinder is
+unusably slow. Enabling optimisation will give you a 100 to 1000 times speedup.
+
+Note that _Cinder_ allows you to use either single or double precision floating
+point numbers by setting the `CINDER_REAL_WIDTH` macro to either "4" or "8".
+Usually, using double precision floating point numbers has close to no negative
+impact on performance. The floating point type used internally by _Cinder_ is
+called `Real`.
+
 ## Example Code
 
 The following code simulates an Izhikevich neuron with two conductance based
 synapses – one excitatory synapse and one inhibitory synapse. The excitatory
 synapse receives spikes at about 100 and 500 ms, the second synapse at about
 400 ms into the simulation.
-
 
 ```c++
 #include <iostream>
@@ -83,7 +104,7 @@ the following image:
 
 ## Features
 
-_Cinder_ is implemented as a C++ almost-header-only template library. This
+_Cinder_ is implemented as a C++ header-only template library. This
 allows the compiler to construct a customised code-path for exactly the
 simulation that is being performed, while keeping the actual model
 implementations extremely concise. With enabled optimisation, a single neuron
