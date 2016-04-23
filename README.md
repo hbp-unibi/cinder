@@ -1,10 +1,10 @@
 # Cinder – A hyper-fast single spiking neuron simulator
 
 Cinder is a highly modular spiking neuron simulator written in C++. In contrast
-to network simulators, it is optimised for simulating a single neuron at a time,
+to network simulators, it is optimised for simulating single neurons,
 allowing to analyse their behaviour, e.g. under changing parameters or varying
-input. In contrast to other simulation tools, adding a new membrane or synapse
-model is mainly a matter of writing down its differential equation in C++.
+input. Cinder is designed for expandability. Adding new membrane or synapse
+models is mainly a matter of writing down their differential equation in C++.
 
 [![Build Status](https://travis-ci.org/hbp-sanncs/cinder.svg?branch=master)](https://travis-ci.org/hbp-sanncs/cinder)
 
