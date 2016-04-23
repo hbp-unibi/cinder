@@ -1,4 +1,21 @@
 language: cpp
+sudo: required
+dist: trusty
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-precise-3.6
+      - george-edison55-precise-backports # cmake 3.2.3 / doxygen 1.8.3
+    packages:
+      - gcc-5
+      - g++-5
+      - clang-3.6
+      - cmake
+      - cmake-data
+before_install:
+  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 50
+  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 50
 script:
   - mkdir build_gcc && cd build_gcc && cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCINDER_REAL_WIDTH=4 && make && make test
   - mkdir build_gcc && cd build_gcc && cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCINDER_REAL_WIDTH=8 && make && make test
