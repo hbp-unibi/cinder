@@ -28,6 +28,10 @@ cmake .. && make && make test
 sudo make install
 ```
 
+Note that CMake will automatically download and build
+[Google Test](https://github.com/google/googletest) for the integrated
+integration and unit test suite.
+
 ## Example Code
 
 The following code simulates an Izhikevich neuron with two conductance based
