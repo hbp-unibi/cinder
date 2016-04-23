@@ -31,7 +31,7 @@ sudo make install
 ## Example Code
 
 The following code simulates an Izhikevich neuron with two conductance based
-synapses -- one excitatory synapse and one inhibitory synapse. The excitatory
+synapses – one excitatory synapse and one inhibitory synapse. The excitatory
 synapse receives spikes at about 100 and 500 ms, the second synapse at about
 400 ms into the simulation.
 
