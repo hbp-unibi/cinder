@@ -99,7 +99,7 @@ public:
 	LIFState df(const State &s, const System &sys) const
 	{
 		if (in_refrac()) {
-			return LIFState({0});
+			return LIFState();
 		}
 		const Current i_syn{sys.ode().current(s, sys)};
 		const Current i_rest{(p().v_rest() - s[0]) * p().g_leak()};
