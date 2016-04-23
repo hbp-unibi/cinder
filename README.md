@@ -74,7 +74,7 @@ int main()
 Plotting the resulting membrane potential and conductivity traces results in
 the following image:
 
-![Izhikevich Cond Alpha Results](https://raw.githubusercontent.com/hbp-sanncs/cinder/master/docs/izhikevich_cond_alpha.png)
+![Izhikevich Cond Alpha Results](https://raw.githubusercontent.com/hbp-sanncs/cinder/master/docs/izhikevich_cond_alpha.png "Result of the Izhikevich-Cond-Alpha example program")
 
 
 ## Features
