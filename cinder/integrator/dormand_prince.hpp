@@ -236,8 +236,13 @@ public:
 			// Run the actual integrator
 			res = static_cast<const Impl *>(this)->doIntegrate(h, s, sys);
 
-			// Calculate the normalized error
+			// Calculate the normalized error -- if an invalid value is returned
+			// reduce the step size
 			const Real e = error(res.second);
+			if (std::isnan(e) && h > MIN_H) {
+				h = h * Real(0.5);
+				continue;
+			}
 
 			// Calculate the timestep scale factor, limit it to the minimum and
 			// maximum scale. We're neither using the PI controller proposed in
