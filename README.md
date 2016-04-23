@@ -83,9 +83,12 @@ _Cinder_ is implemented as a C++ almost-header-only template library. This
 allows the compiler to construct a customised code-path for exactly the
 simulation that is being performed, while keeping the actual model
 implementations extremely concise. With enabled optimisation, a single neuron
-simulation code is inlined into a blob of vectorised assembly without any
+simulation is converted into an inline blob of vectorised assembly without any
 external function calls. This way, _Cinder_ is magnitudes faster than full
 network simulators simulating a single neuron.
+
+Conceptually, each single neuron simulation is represented by an autonomous
+ordinary differential equation (ODE) which is automatically assembled using
 
 
 ### Implemented neuron models
