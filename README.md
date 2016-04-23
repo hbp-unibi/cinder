@@ -50,9 +50,10 @@ find_package(Cinder REQUIRED)
 include_directories(${CINDER_INCLUDE_DIRS})
 ```
 
-If possible, you should use the `-ffast-math` compiler flag for a considerable
-performance boost. Also note that with disabled optimisation (`-O0`) Cinder is
-unusably slow. Enabling optimisation will give you a 100 to 1000 times speedup.
+If possible, you should use the `-ffast-math -fno-finite-math-only` compiler
+flags for a considerable performance boost. Also note that with disabled
+optimisation (`-O0`) Cinder is unusably slow. Enabling optimisation will give
+you a 100 to 1000 times speedup.
 
 Note that _Cinder_ allows you to use either single or double precision floating
 point numbers by setting the `CINDER_REAL_WIDTH` macro to either "4" or "8".
