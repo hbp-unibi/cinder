@@ -36,8 +36,10 @@
 #define CINDER_ODE_RECORDER_HPP
 
 #include <iostream>
+#include <limits>
 
 #include <cinder/common/time.hpp>
+#include <cinder/common/types.hpp>
 
 namespace cinder {
 /**
@@ -117,6 +119,75 @@ public:
 		m_last_time = t;
 	}
 };
+
+/**
+ * The MaximumMembranePotentialRecorder class records the maximum voltage
+ * reached in a neuron simulation.
+ */
+struct MaximumMembranePotentialRecorder {
+	/**
+	 * Time at which the maximum occurred.
+	 */
+	Time t_max = MIN_TIME;
+	Voltage u_max = Voltage(std::numeric_limits<Real>::lowest());
+
+	/**
+	 * Called whenever the integrator processed a time slice. Checks whether the
+	 * current membrane potential is larger than the already seen membrane
+	 * potential. If yes, updates the locally stored maximum time and voltage.
+	 */
+	template <typename State, typename System>
+	void record(Time t, const State &s, const System &sys)
+	{
+		const Voltage u = sys.ode().voltage(s, sys);
+		if (u > u_max) {
+			u_max = u;
+			t_max = t;
+		}
+	}
+};
+
+/**
+ * Lowest recursion level of the MultiRecorder class, just does nothing.
+ */
+template <typename... Recorders>
+class MultiRecorder : public NullRecorder {
+};
+
+/**
+ * Class used to cascade a number of Recorders. Use the make_multi_recorder()
+ * method to conveniently construct a Recorder consisting of multiple recorders.
+ */
+template <typename Recorder, typename... Recorders>
+class MultiRecorder<Recorder, Recorders...> : MultiRecorder<Recorders...> {
+private:
+	Recorder &recorder;
+
+public:
+	MultiRecorder(Recorder &recorder, Recorders &... rs)
+	    : MultiRecorder<Recorders...>(rs...), recorder(recorder)
+	{
+	}
+
+	template <typename State, typename System>
+	void record(Time t, const State &s, const System &sys)
+	{
+		recorder.record(t, s, sys);
+		MultiRecorder<Recorders...>::record(t, s, sys);
+	}
+};
+
+/**
+ * Helper function which can be used to conveniently create a MultiRecorder
+ * instance. Simply pass references to all recorders that should be used to the
+ * method and store the result in an auto variable.
+ */
+template <typename... Recorders>
+MultiRecorder<Recorders...> make_multi_recorder(Recorders &... rs)
+{
+	return MultiRecorder<Recorders...>(rs...);
 }
+}
+
 #endif /* CINDER_ODE_RECORDER_HPP */
 
