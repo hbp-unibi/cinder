@@ -80,21 +80,33 @@ struct NullController : public ConstantController<ControllerResult::CONTINUE> {
 };
 
 /**
- * Controller type which runs the simulation until the neuron settles to its
- * resting potential without any currents flowing.
+ * Controller type which runs the simulation until the neuron potential no
+ * longer changes and no current flows.
  */
-struct NeuronController {
+class NeuronController {
+private:
+	Current m_offs;
+
+public:
+	/**
+	 * Creates a new NeuronController instance. The given offset current can
+	 * be used to end the simulation in case a constant current is injected
+	 * into the simulation.
+	 *
+	 * @param offs is the current which is interpreted as "no current flowing".
+	 */
+	NeuronController(Current offs = 0_A) : m_offs(offs) {}
+
 	template <typename State, typename System>
-	static ControllerResult control(Time, const State &s, const System &sys)
+	ControllerResult control(Time, const State &s, const System &sys)
 	{
-		static constexpr Voltage MAX_DELTA_V = 1_uV;
+		static constexpr Voltage MAX_DV = 1_uV;
 		static constexpr Current MAX_DELTA_I = 1_pA;
 
 		// Abort if there are no more input spikes, the neuron membrane voltage
 		// is near the resting potential and the current is near zero.
-		if (std::abs(sys.ode().voltage(s, sys) -
-		             sys.ode().membrane().p().v_rest()) < MAX_DELTA_V.v() &&
-		    std::abs(sys.ode().current(s, sys)) < MAX_DELTA_I.v()) {
+		if (std::abs(sys.ode().df(s, sys)[0]) < MAX_DV.v() &&
+		    std::abs(sys.ode().current(s, sys) - m_offs) < MAX_DELTA_I.v()) {
 			return ControllerResult::MAY_CONTINUE;
 		}
 		return ControllerResult::CONTINUE;  // Go on forever
