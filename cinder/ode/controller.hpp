@@ -128,7 +128,6 @@ private:
 
 public:
 	ConditionedController(F f) : m_f(std::move(f)) {}
-
 	template <typename State, typename System>
 	ControllerResult control(Time, const State &, const System &)
 	{
@@ -211,6 +210,46 @@ template <typename... Controllers>
 MultiController<Controllers...> make_multi_controller(Controllers &... cs)
 {
 	return MultiController<Controllers...>(cs...);
+}
+
+/**
+ * The ConditionedNeuronController class is a combination of the
+ * "NeuronController" and the "ConditionedController" classes. It allows to
+ * simulate a neuron until it has settled or an externally defined condition is
+ * reached. Use the make_conditioned_neuron_controller() method to conveniently
+ * create an instance of the ConditionedNeuronController.
+ *
+ * @tparam F is the
+ */
+template <typename F>
+struct ConditionedNeuronController
+    : MultiController<ConditionedController<F>, NeuronController> {
+	ConditionedController<F> conditioned_controller;
+	NeuronController neuron_controller;
+
+	ConditionedNeuronController(F f, Current i_offs = 0_A)
+	    : MultiController<ConditionedController<F>, NeuronController>(
+	          conditioned_controller, neuron_controller),
+	      conditioned_controller(f),
+	      neuron_controller(i_offs)
+	{
+	}
+};
+
+/**
+ * Returns an instance of the ConditionedNeuronController class, which is a
+ * combination of a NeuronController and a ConditionedController.
+ *
+ * @param f is the function describing the abort condition.
+ * @param i_offs is the offset current that's being injected into the
+ * neuron. Required to tell the NeuronController which current is supposed
+ * to be interpreted as "no current flowing".
+ */
+template <typename F>
+ConditionedNeuronController<F> make_conditioned_neuron_controller(
+    F f, Current i_offs = 0_A)
+{
+	return ConditionedNeuronController<F>(f, i_offs);
 }
 }
 
