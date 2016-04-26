@@ -159,8 +159,9 @@ class MultiController
 };
 
 /**
- * Class used to cascade a number of Recorders. Use the makeMultiRecorder()
- * method to conveniently construct a Recorder consisting of multiple recorders.
+ * Class used to cascade a number of Controllers. Use the make_multi_controller()
+ * method to conveniently construct a Controller consisting of multiple
+ * controllers.
  */
 template <typename Controller, typename... Controllers>
 class MultiController<Controller, Controllers...>

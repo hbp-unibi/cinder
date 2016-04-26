@@ -17,9 +17,15 @@
  */
 
 /**
- * @file lif.hpp
+ * @file recorder.hpp
  *
- * Implementation of the simple linear integrate and fire neuron model.
+ * Contains some basic recorder classes. Recorders can be used to record the
+ * state of the differential equation being integrated over time. To this end,
+ * recorders provide a record() method which is called after each integration
+ * timestep and after a discontinuity has been processed.
+ *
+ * Multiple Recorder instances can be combined using the MultiRecorder class and
+ * the corresponding make_multi_recorder method.
  *
  * @author Andreas Stöckel
  */
@@ -34,27 +40,67 @@
 #include <cinder/common/time.hpp>
 
 namespace cinder {
+/**
+ * The NullRecorder is the most basic recorder class which just does nothing and
+ * exhibits no overhead at all.
+ */
 struct NullRecorder {
-public:
+	/**
+	 * The record method is called whenever a time slice was processed by the
+	 * integrator. As its name suggests, the NullRecorder will just ignore the
+	 * call to this method an do nothing.
+	 */
 	template <typename State, typename System>
-	void record(Time, const State &, const System &)
+	static void record(Time, const State &, const System &)
 	{
 		// Do nothing here
 	}
 };
 
-struct CSVRecorder {
+/**
+ * The CSVRecorder class can be used to write all neuron state variables over
+ * time as CSV to a stream.
+ */
+class CSVRecorder {
 private:
+	/**
+	 * Reference at the output stream to which the data should be written.
+	 */
 	std::ostream &m_os;
+
+	/**
+	 * Last time a datum was written to the output stream.
+	 */
 	Time m_last_time;
+
+	/**
+	 * User defined minimum delay between writing to points to the output
+	 * stream.
+	 */
 	Time m_min_delta;
 
 public:
+	/**
+	 * Constructor of the CSVRecorder class.
+	 *
+	 * @param os is the output stream to which the CSV should be written.
+	 * @param min_delta is the minimum time difference between two samples in
+	 * the output file. Note that min_delta is ignored in case samples are
+	 * recorded with the same timestamp. This happens if a discontinuity is
+	 * processed which should be recorded.
+	 */
 	CSVRecorder(std::ostream &os, Time min_delta = 0.1_ms)
 	    : m_os(os), m_last_time(MIN_TIME), m_min_delta(min_delta)
 	{
 	}
 
+	/**
+	 * Called whenever the integrator processed a time slice. The CSVRecorder
+	 * class will check whether at least m_min_delta (given in the constructor)
+	 * has passed since something was written to the output stream. If yes, the
+	 * current time stamp and the entire ODE state vector are written to the
+	 * output.
+	 */
 	template <typename State, typename System>
 	void record(Time t, const State &s, const System &)
 	{
@@ -72,5 +118,5 @@ public:
 	}
 };
 }
+#endif /* CINDER_ODE_RECORDER_HPP */
 
-#endif /* CINDER_MODELS_NEURONS_LIF_HPP */
