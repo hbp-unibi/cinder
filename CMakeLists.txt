@@ -67,6 +67,7 @@ add_library(cinder
 	cinder/models/neuron
 	cinder/models/synapse
 	cinder/models/neurons/adex
+	cinder/models/neurons/hodgkin_huxley
 	cinder/models/neurons/izhikevich
 	cinder/models/neurons/lif
 	cinder/models/synapses/cond_alpha
