@@ -227,34 +227,34 @@ struct TraubChannelDynamics {
 	static Real alpha_n(Real V, const HodgkinHuxleyParameters &)
 	{
 		return Real(0.032) * (Real(15.0) - V) /
-		       (std::exp((Real(15.) - V) / Real(5.)) - Real(1.));
+		       (fast::exp((Real(15.) - V) / Real(5.)) - Real(1.));
 	}
 
 	static Real beta_n(Real V, const HodgkinHuxleyParameters &)
 	{
-		return Real(0.5) * std::exp((Real(10.) - V) / Real(40.));
+		return Real(0.5) * fast::exp((Real(10.) - V) / Real(40.));
 	}
 
 	static Real alpha_m(Real V, const HodgkinHuxleyParameters &)
 	{
 		return Real(0.32) * (Real(13.) - V) /
-		       (std::exp((Real(13.) - V) / Real(4.)) - Real(1.));
+		       (fast::exp((Real(13.) - V) / Real(4.)) - Real(1.));
 	}
 
 	static Real beta_m(Real V, const HodgkinHuxleyParameters &)
 	{
 		return Real(0.28) * (V - Real(40.)) /
-		       (std::exp((V - Real(40.)) / Real(5.)) - Real(1.));
+		       (fast::exp((V - Real(40.)) / Real(5.)) - Real(1.));
 	}
 
 	static Real alpha_h(Real V, const HodgkinHuxleyParameters &)
 	{
-		return Real(0.128) * std::exp((Real(17.) - V) / Real(18.));
+		return Real(0.128) * fast::exp((Real(17.) - V) / Real(18.));
 	}
 
 	static Real beta_h(Real V, const HodgkinHuxleyParameters &)
 	{
-		return Real(4.) / (Real(1.) + std::exp((Real(40.) - V) / Real(5.)));
+		return Real(4.) / (Real(1.) + fast::exp((Real(40.) - V) / Real(5.)));
 	}
 };
 
