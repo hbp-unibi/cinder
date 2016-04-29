@@ -205,7 +205,8 @@ public:
 				m_in_refrac = true;
 				emit_spike(t);
 			}
-		} else {
+		}
+		else {
 			m_in_refrac = false;
 		}
 		m_last_v = v;
