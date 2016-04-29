@@ -82,7 +82,7 @@ struct IzhikevichParameters : public VectorBase<IzhikevichParameters, Real, 5> {
 	NAMED_VECTOR_ELEMENT(b, 1);
 	NAMED_VECTOR_ELEMENT(c, 2);
 	NAMED_VECTOR_ELEMENT(d, 3);
-	NAMED_VECTOR_ELEMENT(cm, 4);
+	TYPED_VECTOR_ELEMENT(cm, 4, Capacitance);
 
 	/**
 	 * Returns the explicit refractory period -- the Izhikevich model does not
