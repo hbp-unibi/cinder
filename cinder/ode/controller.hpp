@@ -96,17 +96,16 @@ public:
 	 * @param offs is the current which is interpreted as "no current flowing".
 	 */
 	NeuronController(Current offs = 0_A) : m_offs(offs) {}
-
 	template <typename State, typename System>
 	ControllerResult control(Time, const State &s, const System &sys)
 	{
-		static constexpr Voltage MAX_DV = 1_uV;
-		static constexpr Current MAX_DELTA_I = 1_pA;
+		static constexpr Real MAX_DV = 1e-3;        // 1 mV/s
+		static constexpr Real MAX_DELTA_I = 1e-13;  // 1 pA
 
 		// Abort if there are no more input spikes, the neuron membrane voltage
 		// is near the resting potential and the current is near zero.
-		if (std::abs(sys.ode().df(s, sys)[0]) < MAX_DV.v() &&
-		    std::abs(sys.ode().current(s, sys) - m_offs) < MAX_DELTA_I.v()) {
+		if (std::abs(sys.ode().df(s, sys)[0]) < MAX_DV &&
+		    std::abs(sys.ode().current(s, sys) - m_offs) < MAX_DELTA_I) {
 			return ControllerResult::MAY_CONTINUE;
 		}
 		return ControllerResult::CONTINUE;  // Go on forever
@@ -129,7 +128,6 @@ private:
 
 public:
 	ConditionedController(F f) : m_f(std::move(f)) {}
-
 	template <typename State, typename System>
 	ControllerResult control(Time, const State &, const System &)
 	{
@@ -160,8 +158,9 @@ class MultiController
 };
 
 /**
- * Class used to cascade a number of Recorders. Use the makeMultiRecorder()
- * method to conveniently construct a Recorder consisting of multiple recorders.
+ * Class used to cascade a number of Controllers. Use the make_multi_controller()
+ * method to conveniently construct a Controller consisting of multiple
+ * controllers.
  */
 template <typename Controller, typename... Controllers>
 class MultiController<Controller, Controllers...>
@@ -211,6 +210,46 @@ template <typename... Controllers>
 MultiController<Controllers...> make_multi_controller(Controllers &... cs)
 {
 	return MultiController<Controllers...>(cs...);
+}
+
+/**
+ * The ConditionedNeuronController class is a combination of the
+ * "NeuronController" and the "ConditionedController" classes. It allows to
+ * simulate a neuron until it has settled or an externally defined condition is
+ * reached. Use the make_conditioned_neuron_controller() method to conveniently
+ * create an instance of the ConditionedNeuronController.
+ *
+ * @tparam F is the
+ */
+template <typename F>
+struct ConditionedNeuronController
+    : MultiController<ConditionedController<F>, NeuronController> {
+	ConditionedController<F> conditioned_controller;
+	NeuronController neuron_controller;
+
+	ConditionedNeuronController(F f, Current i_offs = 0_A)
+	    : MultiController<ConditionedController<F>, NeuronController>(
+	          conditioned_controller, neuron_controller),
+	      conditioned_controller(f),
+	      neuron_controller(i_offs)
+	{
+	}
+};
+
+/**
+ * Returns an instance of the ConditionedNeuronController class, which is a
+ * combination of a NeuronController and a ConditionedController.
+ *
+ * @param f is the function describing the abort condition.
+ * @param i_offs is the offset current that's being injected into the
+ * neuron. Required to tell the NeuronController which current is supposed
+ * to be interpreted as "no current flowing".
+ */
+template <typename F>
+ConditionedNeuronController<F> make_conditioned_neuron_controller(
+    F f, Current i_offs = 0_A)
+{
+	return ConditionedNeuronController<F>(f, i_offs);
 }
 }
 
