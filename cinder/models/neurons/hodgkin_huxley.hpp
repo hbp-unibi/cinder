@@ -163,8 +163,8 @@ public:
 
 	HodgkinHuxleyState s0() const
 	{
-		EvaluatedChannelDynamics x((p().e_rev_leak() - p().v_offset()) * 1e3,
-		                           p());
+		EvaluatedChannelDynamics x(
+		    (p().e_rev_leak() - p().v_offset()) * Real(1e3), p());
 		return HodgkinHuxleyState({p().v_rest(),
 		                           x.alpha_n / (x.alpha_n + x.beta_n),
 		                           x.alpha_m / (x.alpha_m + x.beta_m),
@@ -189,9 +189,9 @@ public:
 
 		const Real v = (s[0] - p().v_offset()) * Real(1e3);  // Convert V to mV
 		const EvaluatedChannelDynamics x(v, p());
-		const Real dtN = (x.alpha_n - (x.alpha_n + x.beta_n) * n) * 1e3;
-		const Real dtM = (x.alpha_m - (x.alpha_m + x.beta_m) * m) * 1e3;
-		const Real dtH = (x.alpha_h - (x.alpha_h + x.beta_h) * h) * 1e3;
+		const Real dtN = (x.alpha_n - (x.alpha_n + x.beta_n) * n) * Real(1e3);
+		const Real dtM = (x.alpha_m - (x.alpha_m + x.beta_m) * m) * Real(1e3);
+		const Real dtH = (x.alpha_h - (x.alpha_h + x.beta_h) * h) * Real(1e3);
 
 		return HodgkinHuxleyState({dtV, dtN, dtM, dtH});
 	}
