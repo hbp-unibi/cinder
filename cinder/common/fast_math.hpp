@@ -41,6 +41,12 @@
 #ifndef CINDER_FAST_MATH_HPP
 #define CINDER_FAST_MATH_HPP
 
+#include <cinder/config.h>
+
+#include <algorithm>
+#if !CINDER_USE_FAST_EXP
+#include <cmath>
+#endif
 #include <cstdint>
 
 namespace cinder {
@@ -69,7 +75,14 @@ static inline float pow2(float p)
 	return v.f;
 }
 
-static inline float exp(float p) { return pow2(1.442695040f * p); }
+#if CINDER_USE_FAST_EXP
+static inline float exp(float p)
+{
+	return pow2(1.442695040f * std::min(88.f, p));
+}
+#else
+using std::exp;
+#endif
 }
 }
 

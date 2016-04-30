@@ -24,4 +24,8 @@
 #define CINDER_REAL_WIDTH ${CINDER_REAL_WIDTH}
 #endif
 
+#if !defined(CINDER_USE_FAST_EXP)
+#define CINDER_USE_FAST_EXP ${CINDER_USE_FAST_EXP}
+#endif
+
 #endif /* CINDER_CONFIG_H */
