@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import pyNN.nest as sim
 
-timestep=0.01
+timestep=0.1
 sim.setup(timestep=timestep)
 
 source = sim.Population(1, sim.SpikeSourceArray,
