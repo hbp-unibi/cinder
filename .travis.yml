@@ -17,10 +17,10 @@ before_install:
   - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 50
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 50
 script:
-  - ( mkdir build_gcc4 && cd build_gcc4 && cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCINDER_REAL_WIDTH=4 && make && make test )
-  - ( mkdir build_gcc8 && cd build_gcc8 && cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCINDER_REAL_WIDTH=8 && make && make test )
-  - ( mkdir build_gcc10 && cd build_gcc10 && cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCINDER_REAL_WIDTH=10 && make && make test )
-  - ( mkdir build_clang4 && cd build_clang4 && cmake .. -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCINDER_REAL_WIDTH=4 && make && make test )
-  - ( mkdir build_clang8 && cd build_clang8 && cmake .. -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCINDER_REAL_WIDTH=8 && make && make test )
-  - ( mkdir build_clang10 && cd build_clang10 && cmake .. -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCINDER_REAL_WIDTH=10 && make && make test )
+  - ( mkdir build_gcc4 && cd build_gcc4 && cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCINDER_REAL_WIDTH=4 && make && make test ARGS=-V )
+  - ( mkdir build_gcc8 && cd build_gcc8 && cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCINDER_REAL_WIDTH=8 && make && make test ARGS=-V )
+  - ( mkdir build_gcc10 && cd build_gcc10 && cmake .. -DCMAKE_CXX_COMPILER=g++ -DCMAKE_C_COMPILER=gcc -DCINDER_REAL_WIDTH=10 && make && make test ARGS=-V )
+  - ( mkdir build_clang4 && cd build_clang4 && cmake .. -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCINDER_REAL_WIDTH=4 && make && make test ARGS=-V )
+  - ( mkdir build_clang8 && cd build_clang8 && cmake .. -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCINDER_REAL_WIDTH=8 && make && make test ARGS=-V )
+  - ( mkdir build_clang10 && cd build_clang10 && cmake .. -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCINDER_REAL_WIDTH=10 && make && make test ARGS=-V )
 
