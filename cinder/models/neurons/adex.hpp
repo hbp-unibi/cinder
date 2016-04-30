@@ -111,8 +111,9 @@ private:
 	 * Function called whenever an output spike is generated. Allows some models
 	 * to update their interal state whenever an output spike occurs.
 	 */
-	template<typename State, typename System>
-	void handle_output_spike(Time, State &s, System &) {
+	template <typename State, typename System>
+	void handle_output_spike(Time, State &s, System &)
+	{
 		s[1] += p().b();
 	}
 
@@ -126,8 +127,9 @@ public:
 	{
 		// Calculate the maximum exponent allowed in the threshold current
 		static constexpr RealTime MIN_DELTA_T = 0.1_us;
-		m_max_i_th_exp = log((p().v_spike() - p().v_reset()) /
-		                   (MIN_DELTA_T.v() * p().delta_T() / p().tau_m()));
+		m_max_i_th_exp =
+		    std::log((p().v_spike() - p().v_reset()) /
+		             (MIN_DELTA_T.v() * p().delta_T() / p().tau_m()));
 
 		// Use the inverse of some values in order to avoid divisions in the
 		// df code.
