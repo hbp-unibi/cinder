@@ -60,7 +60,7 @@ TEST(hodgkin_huxley, cond_exp)
 	// Make sure the two results are within the range of one millisecond
 	ASSERT_EQ(expected_spikes.size(), spikes.size());
 	for (size_t i = 0; i < spikes.size(); i++) {
-		EXPECT_GT(0.7_ms, std::abs(expected_spikes[i] - spikes[i]));
+		EXPECT_GT(0.5_ms, std::abs(expected_spikes[i] - spikes[i]));
 	}
 }
 }

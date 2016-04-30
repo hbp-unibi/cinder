@@ -53,7 +53,7 @@ include_directories(${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 
 # Add configuration option for setting the width of the floating point values
 set(CINDER_REAL_WIDTH 8 CACHE STRING "Width of the floating point values in bytes (one of 4, 8, 10, 16)")
-set(CINDER_USE_FAST_EXP 1 CACHE FLAG "If true, an approximation of the exponential function is used to improve performance for the AdEx and Hodgkin-Huxley models.")
+set(CINDER_USE_FAST_EXP 1 CACHE FLAG "If true, an approximation of the exponential function is used to improve performance for the AdEx model.")
 
 configure_file(cinder/config.h.in cinder/config.h)
 

@@ -30,7 +30,8 @@
 #ifndef CINDER_MODELS_NEURONS_HODGKIN_HUXLEY_HPP
 #define CINDER_MODELS_NEURONS_HODGKIN_HUXLEY_HPP
 
-#include <cinder/common/fast_math.hpp>
+#include <cmath>
+
 #include <cinder/models/neuron.hpp>
 
 namespace cinder {
@@ -135,23 +136,13 @@ private:
 	struct EvaluatedChannelDynamics {
 		const Real alpha_n, beta_n, alpha_m, beta_m, alpha_h, beta_h;
 
-		/**
-		 * Function used to limit the value range of the alpha and beta values
-		 * to prevent strange numeric stuff from happening. Slightly increases
-		 * the error.
-		 */
-		static Real limit(Real x)
-		{
-			return std::min<Real>(1e3, std::max<Real>(-1e3, x));
-		}
-
 		EvaluatedChannelDynamics(const Real v, const HodgkinHuxleyParameters &p)
-		    : alpha_n(limit(ChannelDynamics::alpha_n(v, p))),
-		      beta_n(limit(ChannelDynamics::beta_n(v, p))),
-		      alpha_m(limit(ChannelDynamics::alpha_m(v, p))),
-		      beta_m(limit(ChannelDynamics::beta_m(v, p))),
-		      alpha_h(limit(ChannelDynamics::alpha_h(v, p))),
-		      beta_h(limit(ChannelDynamics::beta_h(v, p)))
+		    : alpha_n(ChannelDynamics::alpha_n(v, p)),
+		      beta_n(ChannelDynamics::beta_n(v, p)),
+		      alpha_m(ChannelDynamics::alpha_m(v, p)),
+		      beta_m(ChannelDynamics::beta_m(v, p)),
+		      alpha_h(ChannelDynamics::alpha_h(v, p)),
+		      beta_h(ChannelDynamics::beta_h(v, p))
 		{
 		}
 	};
@@ -241,34 +232,34 @@ struct TraubChannelDynamics {
 	static Real alpha_n(Real V, const HodgkinHuxleyParameters &)
 	{
 		return Real(0.032) * (Real(15.0) - V) /
-		       (fast::exp((Real(15.) - V) / Real(5.)) - Real(1.));
+		       (std::exp((Real(15.) - V) / Real(5.)) - Real(1.));
 	}
 
 	static Real beta_n(Real V, const HodgkinHuxleyParameters &)
 	{
-		return Real(0.5) * fast::exp((Real(10.) - V) / Real(40.));
+		return Real(0.5) * std::exp((Real(10.) - V) / Real(40.));
 	}
 
 	static Real alpha_m(Real V, const HodgkinHuxleyParameters &)
 	{
 		return Real(0.32) * (Real(13.) - V) /
-		       (fast::exp((Real(13.) - V) / Real(4.)) - Real(1.));
+		       (std::exp((Real(13.) - V) / Real(4.)) - Real(1.));
 	}
 
 	static Real beta_m(Real V, const HodgkinHuxleyParameters &)
 	{
 		return Real(0.28) * (V - Real(40.)) /
-		       (fast::exp((V - Real(40.)) / Real(5.)) - Real(1.));
+		       (std::exp((V - Real(40.)) / Real(5.)) - Real(1.));
 	}
 
 	static Real alpha_h(Real V, const HodgkinHuxleyParameters &)
 	{
-		return Real(0.128) * fast::exp((Real(17.) - V) / Real(18.));
+		return Real(0.128) * std::exp((Real(17.) - V) / Real(18.));
 	}
 
 	static Real beta_h(Real V, const HodgkinHuxleyParameters &)
 	{
-		return Real(4.) / (Real(1.) + fast::exp((Real(40.) - V) / Real(5.)));
+		return Real(4.) / (Real(1.) + std::exp((Real(40.) - V) / Real(5.)));
 	}
 };
 
