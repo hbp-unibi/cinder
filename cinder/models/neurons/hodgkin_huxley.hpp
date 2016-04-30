@@ -128,16 +128,30 @@ private:
 	using Base = MembraneBase<HodgkinHuxleyState, HodgkinHuxleyParameters,
 	                          SpikeCallback_>;
 
+	/**
+	 * The EvaluatedChannelDynamics helper class is used to evaluated the alpha
+	 * and beta functions provided by the ChannelDynamics type.
+	 */
 	struct EvaluatedChannelDynamics {
 		const Real alpha_n, beta_n, alpha_m, beta_m, alpha_h, beta_h;
 
+		/**
+		 * Function used to limit the value range of the alpha and beta values
+		 * to prevent strange numeric stuff from happening. Slightly increases
+		 * the error.
+		 */
+		static Real limit(Real x)
+		{
+			return std::min<Real>(1e3, std::max<Real>(-1e3, x));
+		}
+
 		EvaluatedChannelDynamics(const Real v, const HodgkinHuxleyParameters &p)
-		    : alpha_n(ChannelDynamics::alpha_n(v, p)),
-		      beta_n(ChannelDynamics::beta_n(v, p)),
-		      alpha_m(ChannelDynamics::alpha_m(v, p)),
-		      beta_m(ChannelDynamics::beta_m(v, p)),
-		      alpha_h(ChannelDynamics::alpha_h(v, p)),
-		      beta_h(ChannelDynamics::beta_h(v, p))
+		    : alpha_n(limit(ChannelDynamics::alpha_n(v, p))),
+		      beta_n(limit(ChannelDynamics::beta_n(v, p))),
+		      alpha_m(limit(ChannelDynamics::alpha_m(v, p))),
+		      beta_m(limit(ChannelDynamics::beta_m(v, p))),
+		      alpha_h(limit(ChannelDynamics::alpha_h(v, p))),
+		      beta_h(limit(ChannelDynamics::beta_h(v, p)))
 		{
 		}
 	};
