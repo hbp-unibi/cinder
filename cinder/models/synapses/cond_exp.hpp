@@ -70,11 +70,11 @@ public:
 	{
 	}
 
-	template <typename State, typename System>
-	SingleConductanceState df(const State &s, const System &) const
+	template <typename State2, typename System>
+	State df(const State2 &s, const System &) const
 	{
 		// Exponential decay of the conductance
-		return SingleConductanceState({-m_tau_inv * s[0]});
+		return State({-m_tau_inv * s[0]});
 	}
 
 	template <typename State, typename System>

@@ -56,8 +56,8 @@ public:
 	{
 	}
 
-	template <typename State, typename System>
-	NullState df(const State &, const System &) const
+	template <typename State2, typename System>
+	State df(const State2 &, const System &) const
 	{
 		return NullState();
 	}
