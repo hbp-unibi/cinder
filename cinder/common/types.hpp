@@ -73,20 +73,14 @@ using Real = float;
  * suffix whenever you have a floating point constant in the code for which you
  * want to use the user-defined floating-point number width.
  */
-static constexpr Real operator"" _R(sx_double_t x) \
-{
-	return Real(x);
-}
+static constexpr Real operator"" _R(sx_double_t x) { return Real(x); }
 
 /**
  * Suffix declaration converting an integer to the cinder Real type. Use this
  * suffix whenever you have an integer constant in the code which you want to
  * convert to the user-defined floating-point number width.
  */
-static constexpr Real operator"" _R(sx_int_t x)    \
-{
-	return Real(x);
-}
+static constexpr Real operator"" _R(sx_int_t x) { return Real(x); }
 
 /**
  * The quantity type is a class wrapper for any C++ numerical type. This allows
