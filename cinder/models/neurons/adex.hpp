@@ -93,14 +93,13 @@ struct AdExParameters : public VectorBase<AdExParameters, Real, 11> {
 	RealTime tau_m() const { return RealTime(cm().v() / g_leak().v()); }
 };
 
-template <typename SpikeCallback_>
-class AdEx : public SpikingMembraneBase<AdEx<SpikeCallback_>, AdExState,
-                                        AdExParameters, SpikeCallback_, false> {
+class AdEx : public SpikingMembraneBase<AdEx, AdExState,
+                                        AdExParameters, false> {
 private:
-	friend class SpikingMembraneBase<AdEx<SpikeCallback_>, AdExState,
-	                                 AdExParameters, SpikeCallback_, false>;
-	using Base = SpikingMembraneBase<AdEx<SpikeCallback_>, AdExState,
-	                                 AdExParameters, SpikeCallback_, false>;
+	friend class SpikingMembraneBase<AdEx, AdExState,
+	                                 AdExParameters, false>;
+	using Base = SpikingMembraneBase<AdEx, AdExState,
+	                                 AdExParameters, false>;
 	Real m_max_i_th_exp;
 	Real m_delta_t_inv;
 	Real m_cm_inv;

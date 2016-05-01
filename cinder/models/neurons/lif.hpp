@@ -83,12 +83,9 @@ struct LIFParameters : public VectorBase<LIFParameters, Real, 7> {
 	RealTime tau_m() const { return RealTime(cm().v() / g_leak().v()); }
 };
 
-template <typename SpikeCallback_>
-class LIF : public SpikingMembraneBase<LIF<SpikeCallback_>, LIFState, LIFParameters,
-                                       SpikeCallback_, true> {
+class LIF : public SpikingMembraneBase<LIF, LIFState, LIFParameters, true> {
 private:
-	using Base = SpikingMembraneBase<LIF<SpikeCallback_>, LIFState,
-	                                 LIFParameters, SpikeCallback_, true>;
+	using Base = SpikingMembraneBase<LIF, LIFState, LIFParameters, true>;
 
 public:
 	using Base::Base;

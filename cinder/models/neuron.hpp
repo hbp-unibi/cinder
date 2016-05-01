@@ -29,6 +29,7 @@
 #ifndef CINDER_MODELS_NEURON_HPP
 #define CINDER_MODELS_NEURON_HPP
 
+#include <functional>
 #include <tuple>
 
 #include <cinder/common/types.hpp>
@@ -39,11 +40,11 @@ namespace cinder {
 /**
  * Implementation of a basic parameterised neuron membrane.
  */
-template <typename State_, typename Parameters_, typename SpikeCallback_>
+template <typename State_, typename Parameters_>
 class MembraneBase : public ODEBase<State_> {
 public:
 	using Parameters = Parameters_;
-	using SpikeCallback = SpikeCallback_;
+	using SpikeCallback = std::function<void(Time t)>;
 
 private:
 	Parameters m_params;
@@ -95,11 +96,10 @@ public:
  * the refractory period.
  */
 template <typename Impl_, typename State_, typename Parameters_,
-          typename SpikeCallback_, bool ArtificialSpike_>
-class SpikingMembraneBase
-    : public MembraneBase<State_, Parameters_, SpikeCallback_> {
+          bool ArtificialSpike_>
+class SpikingMembraneBase : public MembraneBase<State_, Parameters_> {
 private:
-	using Base = MembraneBase<State_, Parameters_, SpikeCallback_>;
+	using Base = MembraneBase<State_, Parameters_>;
 	Time m_ref_end = MAX_TIME;
 
 	Impl_ &impl() { return static_cast<Impl_ &>(*this); }
@@ -218,15 +218,14 @@ public:
 	}
 };
 
-template <template <class> class Membrane, typename CurrentSource,
-          typename SpikeCallback>
+template <typename Membrane, typename CurrentSource>
 auto make_neuron(const CurrentSource &current_source,
-                 const SpikeCallback &spike_callback,
-                 const typename Membrane<SpikeCallback>::Parameters &params =
-                     typename Membrane<SpikeCallback>::Parameters())
+                 const typename Membrane::SpikeCallback &spike_callback,
+                 const typename Membrane::Parameters &params =
+                     typename Membrane::Parameters())
 {
-	return Neuron<Membrane<SpikeCallback>, CurrentSource>(
-	    Membrane<SpikeCallback>(params, spike_callback), current_source);
+	return Neuron<Membrane, CurrentSource>(Membrane(params, spike_callback),
+	                                       current_source);
 }
 }
 

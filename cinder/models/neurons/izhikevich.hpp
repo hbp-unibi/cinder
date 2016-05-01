@@ -116,18 +116,14 @@ struct IzhikevichParameters : public VectorBase<IzhikevichParameters, Real, 5> {
 /**
  * Implementation fo the Izhikevich neuron model.
  */
-template <typename SpikeCallback_>
-class Izhikevich
-    : public SpikingMembraneBase<Izhikevich<SpikeCallback_>, IzhikevichState,
-                                 IzhikevichParameters, SpikeCallback_, true> {
+class Izhikevich : public SpikingMembraneBase<Izhikevich, IzhikevichState,
+                                              IzhikevichParameters, true> {
 private:
-	friend class SpikingMembraneBase<Izhikevich<SpikeCallback_>,
-	                                 IzhikevichState, IzhikevichParameters,
-	                                 SpikeCallback_, true>;
+	friend class SpikingMembraneBase<Izhikevich, IzhikevichState,
+	                                 IzhikevichParameters, true>;
 
-	using Base =
-	    SpikingMembraneBase<Izhikevich<SpikeCallback_>, IzhikevichState,
-	                        IzhikevichParameters, SpikeCallback_, true>;
+	using Base = SpikingMembraneBase<Izhikevich, IzhikevichState,
+	                                 IzhikevichParameters, true>;
 
 	Real m_cm_inv;
 

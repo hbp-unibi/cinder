@@ -121,13 +121,11 @@ struct HodgkinHuxleyParameters
  * Implementation fo the Hodgkin-Huxley neuron model with generic channel
  * dynamics.
  */
-template <typename ChannelDynamics, typename SpikeCallback_>
-class GenericHodgkinHuxley
-    : public MembraneBase<HodgkinHuxleyState, HodgkinHuxleyParameters,
-                          SpikeCallback_> {
+template <typename ChannelDynamics>
+class HodgkinHuxleyBase
+    : public MembraneBase<HodgkinHuxleyState, HodgkinHuxleyParameters> {
 private:
-	using Base = MembraneBase<HodgkinHuxleyState, HodgkinHuxleyParameters,
-	                          SpikeCallback_>;
+	using Base = MembraneBase<HodgkinHuxleyState, HodgkinHuxleyParameters>;
 
 	/**
 	 * The EvaluatedChannelDynamics helper class is used to evaluated the alpha
@@ -267,12 +265,10 @@ class TraubChannelDynamics {
 /**
  * Implementation of a Hodgkin-Huxley type neuron with TraubChannelDynamics.
  */
-template <typename SpikeCallback_>
 class HodgkinHuxley
-    : public GenericHodgkinHuxley<TraubChannelDynamics, SpikeCallback_> {
+    : public HodgkinHuxleyBase<TraubChannelDynamics> {
 public:
-	using GenericHodgkinHuxley<TraubChannelDynamics,
-	                           SpikeCallback_>::GenericHodgkinHuxley;
+	using HodgkinHuxleyBase<TraubChannelDynamics>::HodgkinHuxleyBase;
 };
 }
 
