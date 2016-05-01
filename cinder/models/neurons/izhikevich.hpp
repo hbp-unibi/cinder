@@ -142,25 +142,25 @@ public:
 	{
 		// Use the inverse of some values in order to avoid divisions in the
 		// df code.
-		m_cm_inv = 1.0 / p().cm();
+		m_cm_inv = 1.0_R / p().cm();
 	}
 
 	IzhikevichState s0() const
 	{
-		return IzhikevichState({p().v_rest(), Real(-14.0)});
+		return IzhikevichState({p().v_rest(), -14.0_R});
 	}
 
 	template <typename State, typename System>
 	IzhikevichState df(const State &s, const System &sys) const
 	{
-		const Real v = s[0] * Real(1e3);  // Convert V to mV
+		const Real v = s[0] * 1e3_R;  // Convert V to mV
 		const Real u = s[1];
 		return IzhikevichState(
-		    {(Real(0.04) * v * v + Real(5.0) * v + Real(140.0) - u) +
+		    {(0.04_R * v * v + 5.0_R * v + 140.0_R - u) +
 		         sys.ode().current(s, sys) * m_cm_inv,
-		     p().a() * (p().b() * v - u) * Real(1e3)});
+		     p().a() * (p().b() * v - u) * 1e3_R});
 	}
 };
 }
 
-#endif /* CINDER_MODELS_NEURONS_IZHIKEVICH_HPP */
+#endif /* CINDER_MODELS_NEURONS_IZHIKEVICH_HPP */	

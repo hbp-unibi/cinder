@@ -132,10 +132,10 @@ public:
 
 		// Use the inverse of some values in order to avoid divisions in the
 		// df code.
-		m_delta_t_inv = 1.0 / p().delta_T();
-		m_cm_inv = 1.0 / p().cm();
-		m_tau_w_inv = 1.0 / p().tau_w();
-		m_tau_m_inv = 1.0 / p().tau_m();
+		m_delta_t_inv = 1.0_R / p().delta_T();
+		m_cm_inv = 1.0_R / p().cm();
+		m_tau_w_inv = 1.0_R / p().tau_w();
+		m_tau_m_inv = 1.0_R / p().tau_m();
 	}
 
 	template <typename State, typename System>

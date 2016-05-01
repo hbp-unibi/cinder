@@ -83,8 +83,8 @@ public:
 	CondAlpha(Conductance w, Time tau, Voltage e_rev,
 	          const std::vector<Spike> &input_spikes = std::vector<Spike>())
 	    : SynapseBase<CondAlpha, AlphaConductanceState>(input_spikes),
-	      m_w(w.v() * Real(2.718281828)),
-	      m_tau_inv(1.0 / tau.sec()),
+	      m_w(w.v() * 2.718281828_R),
+	      m_tau_inv(1.0_R / tau.sec()),
 	      m_e_rev(e_rev)
 	{
 	}

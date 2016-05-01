@@ -166,8 +166,7 @@ public:
 
 	HodgkinHuxleyState s0() const
 	{
-		EvaluatedChannelDynamics x((p().e_rev_leak() - p().v_offset()) *
-		                           Real(1e3));
+		EvaluatedChannelDynamics x((p().e_rev_leak() - p().v_offset()) * 1e3_R);
 		return HodgkinHuxleyState({p().v_rest(),
 		                           x.alpha_n / (x.alpha_n + x.beta_n),
 		                           x.alpha_m / (x.alpha_m + x.beta_m),
@@ -190,11 +189,11 @@ public:
 		const Real i_syn = sys.ode().current(s, sys);
 		const Real dtV = (i_syn - (i_Na + i_K + i_l)) / p().cm();
 
-		const Real v = (s[0] - p().v_offset()) * Real(1e3);  // Convert V to mV
+		const Real v = (s[0] - p().v_offset()) * 1e3_R;  // Convert V to mV
 		const EvaluatedChannelDynamics x(v);
-		const Real dtN = (x.alpha_n - (x.alpha_n + x.beta_n) * n) * Real(1e3);
-		const Real dtM = (x.alpha_m - (x.alpha_m + x.beta_m) * m) * Real(1e3);
-		const Real dtH = (x.alpha_h - (x.alpha_h + x.beta_h) * h) * Real(1e3);
+		const Real dtN = (x.alpha_n - (x.alpha_n + x.beta_n) * n) * 1e3_R;
+		const Real dtM = (x.alpha_m - (x.alpha_m + x.beta_m) * m) * 1e3_R;
+		const Real dtH = (x.alpha_h - (x.alpha_h + x.beta_h) * h) * 1e3_R;
 
 		return HodgkinHuxleyState({dtV, dtN, dtM, dtH});
 	}
@@ -226,47 +225,67 @@ public:
  * The formulas were directly taken from the NEST source-code of the
  * hh_cond_exp_traub model.
  */
-struct TraubChannelDynamics {
 class TraubChannelDynamics {
+private:
+	static Real limit_denom(Real x)
+	{
+		static constexpr Real MIN_DENOM = 1e-6;
+		if (std::abs(x) < MIN_DENOM) {
+			if (x < 0) {
+				return -MIN_DENOM;
+			}
+			else {
+				return MIN_DENOM;
+			}
+		}
+		return x;
+	}
+
+	static Real limit(Real x)
+	{
+		static constexpr Real MAX_RES = 1e3;
+		return std::min(MAX_RES, std::max(-MAX_RES, x));
+	}
+
+public:
 	static Real alpha_n(Real V)
 	{
-		return Real(0.032) * (Real(15.0) - V) /
-		       (std::exp((Real(15.) - V) / Real(5.)) - Real(1.));
+		return limit(0.032_R * (15.0_R - V) /
+		             limit_denom(std::exp((15._R - V) / 5._R) - 1._R));
 	}
 
 	static Real beta_n(Real V)
 	{
-		return Real(0.5) * std::exp((Real(10.) - V) / Real(40.));
+		return limit(0.5_R * std::exp((10._R - V) / 40._R));
 	}
 
 	static Real alpha_m(Real V)
 	{
-		return Real(0.32) * (Real(13.) - V) /
-		       (std::exp((Real(13.) - V) / Real(4.)) - Real(1.));
+		return limit(0.32_R * (13._R - V) /
+		             limit_denom((std::exp((13._R - V) / 4._R) - 1._R)));
 	}
 
 	static Real beta_m(Real V)
 	{
-		return Real(0.28) * (V - Real(40.)) /
-		       (std::exp((V - Real(40.)) / Real(5.)) - Real(1.));
+		return limit(0.28_R * (V - 40._R) /
+		             limit_denom((std::exp((V - 40._R) / 5._R) - 1._R)));
 	}
 
 	static Real alpha_h(Real V)
 	{
-		return Real(0.128) * std::exp((Real(17.) - V) / Real(18.));
+		return limit(0.128_R * std::exp((17._R - V) / 18._R));
 	}
 
 	static Real beta_h(Real V)
 	{
-		return Real(4.) / (Real(1.) + std::exp((Real(40.) - V) / Real(5.)));
+		return limit(4._R / limit_denom((1._R + std::exp((40._R - V) / 5._R))));
 	}
 };
 
 /**
  * Implementation of a Hodgkin-Huxley type neuron with TraubChannelDynamics.
  */
-class HodgkinHuxley
-    : public HodgkinHuxleyBase<TraubChannelDynamics> {
+class HodgkinHuxley : public HodgkinHuxleyBase<TraubChannelDynamics> {
 public:
 	using HodgkinHuxleyBase<TraubChannelDynamics>::HodgkinHuxleyBase;
 };

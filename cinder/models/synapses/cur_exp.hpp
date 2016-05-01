@@ -54,7 +54,7 @@ public:
 	       const std::vector<Spike> &input_spikes = std::vector<Spike>())
 	    : SynapseBase<CurExp, SingleCurrentState>(input_spikes),
 	      m_w(w),
-	      m_tau_inv(1.0 / tau.sec())
+	      m_tau_inv(1.0_R / tau.sec())
 	{
 	}
 
