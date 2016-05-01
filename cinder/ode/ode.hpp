@@ -31,6 +31,7 @@
 
 #include <tuple>
 
+#include <cinder/common/array_utils.hpp>
 #include <cinder/common/time.hpp>
 #include <cinder/common/types.hpp>
 #include <cinder/common/vector.hpp>
@@ -117,37 +118,6 @@ static constexpr size_t dim()
 {
 	return Dim<T...>::calculate();
 }
-
-/* See
- * http://stackoverflow.com/questions/25068481/c11-constexpr-flatten-list-of-stdarray-into-array
- */
-
-template <size_t... Is>
-struct seq {
-};
-template <size_t N, size_t... Is>
-struct gen_seq : gen_seq<N - 1, N - 1, Is...> {
-};
-template <size_t... Is>
-struct gen_seq<0, Is...> : seq<Is...> {
-};
-
-template <typename T, size_t N1, size_t... I1, size_t N2, size_t... I2>
-// Expansion pack
-constexpr std::array<T, N1 + N2> concat(const std::array<T, N1> &a1,
-                                        const std::array<T, N2> &a2, seq<I1...>,
-                                        seq<I2...>)
-{
-	return {a1[I1]..., a2[I2]...};
-}
-
-template <typename T, size_t N1, size_t N2>
-// Initializer for the recursion
-constexpr std::array<T, N1 + N2> concat(const std::array<T, N1> &a1,
-                                        const std::array<T, N2> &a2)
-{
-	return concat(a1, a2, gen_seq<N1>{}, gen_seq<N2>{});
-}
 }
 
 /**
@@ -170,7 +140,7 @@ public:
 		template <size_t I, typename T0, typename... Ts>
 		static constexpr auto scale_impl()
 		{
-			return internal::concat<Real>(T0::State::scale().as_array(),
+			return concat<Real>(T0::State::scale().as_array(),
 			                              scale_impl<0, Ts...>());
 		}
 

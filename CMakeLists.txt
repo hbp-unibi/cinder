@@ -59,6 +59,7 @@ configure_file(cinder/config.h.in cinder/config.h)
 
 # Compile the library itself
 add_library(cinder
+	cinder/common/array_utils
 	cinder/common/fast_math
 	cinder/common/spike
 	cinder/common/time
