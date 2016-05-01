@@ -303,9 +303,7 @@ namespace {
 struct TestVector : public VectorBase<TestVector, Real, 6> {
 	using VectorBase<TestVector, Real, 6>::VectorBase;
 
-	TestVector() {
-		a(42.0);
-	}
+	TestVector() { a(42.0); }
 
 	NAMED_VECTOR_ELEMENT(a, 0);
 	TYPED_VECTOR_ELEMENT(u, 1, Voltage);
@@ -318,9 +316,7 @@ struct TestVector : public VectorBase<TestVector, Real, 6> {
 struct TestVector2 : public VectorBase<TestVector2, Real, 3> {
 	using VectorBase<TestVector2, Real, 3>::VectorBase;
 
-	TestVector2() {
-		b(84.0);
-	}
+	TestVector2() { b(84.0); }
 
 	NAMED_VECTOR_ELEMENT(b, 0);
 	TYPED_VECTOR_ELEMENT(c, 1, Voltage);
@@ -369,7 +365,8 @@ TEST(vector, named_elements)
 	EXPECT_EQ(expected_scales, TestVector::scales());
 }
 
-TEST(multi_vector, named_elements) {
+TEST(multi_vector, named_elements)
+{
 	EXPECT_EQ("a", TestMultiVector::info<0>().name);
 	EXPECT_EQ("u", TestMultiVector::info<1>().name);
 	EXPECT_EQ("i", TestMultiVector::info<2>().name);
@@ -400,9 +397,12 @@ TEST(multi_vector, named_elements) {
 	EXPECT_EQ(1e3, TestMultiVector::info<7>().scale);
 	EXPECT_EQ(1e9, TestMultiVector::info<8>().scale);
 
-	std::array<const char *, 9> expected_names = {"a", "u", "i", "c", "g", "t", "b", "c", "d"};
-	std::array<const char *, 9> expected_units = {"", "V", "A", "F", "S", "s", "", "V", "A"};
-	TestMultiVector expected_scales = {{1e0, 1e3, 1e9, 1e9, 1e6, 1e3, 1e0, 1e3, 1e9}};
+	std::array<const char *, 9> expected_names = {"a", "u", "i", "c", "g",
+	                                              "t", "b", "c", "d"};
+	std::array<const char *, 9> expected_units = {"",  "V", "A", "F", "S",
+	                                              "s", "",  "V", "A"};
+	TestMultiVector expected_scales = {
+	    {1e0, 1e3, 1e9, 1e9, 1e6, 1e3, 1e0, 1e3, 1e9}};
 
 	EXPECT_EQ(expected_names, TestMultiVector::names());
 	EXPECT_EQ(expected_units, TestMultiVector::units());

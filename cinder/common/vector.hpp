@@ -642,12 +642,56 @@ public:
 
 private:
 	/**
+	 * Helper structure used to make sure that the inner vector types do not
+	 * posses any additional member variables, as this would interfere with the
+	 * way the default constructors of the inner types are called.
+	 */
+	template <size_t Expected, size_t Actual>
+	struct SizeCheck {
+		/**
+		 * Calculates the expected size taking the alignment into account.
+		 */
+		static constexpr size_t aligned_size(size_t s)
+		{
+			constexpr size_t ALIGN = 16;
+			return s == 0 ? ALIGN : ((s + ALIGN - 1) / ALIGN) * ALIGN;
+		}
+
+		static_assert(
+		    aligned_size(Expected) == aligned_size(Actual),
+		    "Vectors used in conjunction with MultiVector may not possess any "
+		    "additional data members!");
+	};
+
+	/**
 	 * Recursion termination for the element_info introspection method. Simply
 	 * calles the element_info method for the element with the index I - Offs
 	 * in the vector Vec0.
 	 */
 	template <size_t I, size_t Offs>
 	static constexpr VectorElementInfo element_info_impl()
+	{
+		return VectorElementInfo();
+	}
+
+	/**
+	 * Actuall call to the info method of the internal vector type. Only enabled
+	 * if the given index is valid.
+	 */
+	template <size_t I, typename V>
+	static constexpr VectorElementInfo element_info_impl(
+	    typename std::enable_if<(I < V::Size)>::type * = 0)
+	{
+		return V::template info<I>();
+	}
+
+	/**
+	 * If the given index is not valid, return an empty VectorElementInfo
+	 * object.
+	 */
+	template <size_t I, typename V>
+	static constexpr VectorElementInfo element_info_impl(
+	    typename std::enable_if<(I >= V::Size)>::type * = 0)
 	{
 		return VectorElementInfo();
 	}
@@ -660,8 +704,8 @@ private:
 	template <size_t I, size_t Offs, typename V0, typename... Vs>
 	static constexpr VectorElementInfo element_info_impl()
 	{
-		return I - Offs < V0::Size
-		           ? V0::template info<(I - Offs) % V0::Size>()
+		return I < V0::Size + Offs
+		           ? element_info_impl<I - Offs, V0>()
 		           : element_info_impl<I, Offs + V0::Size, Vs...>();
 	}
 
@@ -670,45 +714,32 @@ private:
 	 * ctor_impl().
 	 */
 	template <size_t Offs>
-	static void ctor_impl(std::array<typename Base::value_type, Base::Size> &)
+	void ctor_impl(typename Base::pointer)
 	{
 	}
 
 	/**
-	 * Compile-time recursive implementation of the default constructor, calls
-	 * the constructor of all the Vector types the MultiVector is composed of.
+	 * Compile-time recursive implementation of the default constructor.
+	 * Constructs the inner vectors at the corresponding memory addresses.
 	 */
 	template <size_t Offs, typename V0, typename... Vs>
-	static void ctor_impl(
-	    std::array<typename Base::value_type, Base::Size> &tar)
+	void ctor_impl(typename Base::pointer tar)
 	{
-		// Call the default constructor of V0, copy the elements into the target
-		// array
-		auto arr = V0().as_array();
-		std::copy(arr.begin(), arr.begin() + V0::Size, tar.begin() + Offs);
-
-		// Recursively continue with the next type
+		// Call the constructor at the target memory address.
+		// Note: This is a very dirty hack which may cause strange bugs as soon
+		// as child classes have additional data members. However, any other
+		// means of calling the V0 constructor caused a factor two slowdown in
+		// the unit tests which is not acceptable.
+		SizeCheck<sizeof(V0), V0::Size * sizeof(typename Base::value_type)>();
+		new (tar + Offs) V0;
 		ctor_impl<Offs + V0::Size, Vs...>(tar);
-	}
-
-	/**
-	 * Compile-time recursive implementation of the default constructor. Creates
-	 * the target array and continues with the inner ctor_impl() method.
-	 */
-	template <size_t Offs, typename V0, typename... Vs>
-	static std::array<typename Base::value_type, Base::Size> ctor_impl()
-	{
-		// Create the target array and start the recursion
-		std::array<typename Base::value_type, Base::Size> res;
-		ctor_impl<Offs, V0, Vs...>(res);
-		return res;
 	}
 
 public:
 	/**
-	 * Default constructor: recursively call the internal default constructors.
+	 * Default constructor: recursively call the inner default constructors.
 	 */
-	MultiVector() : Base(ctor_impl<0, Vec0, Vecs...>()) {}
+	MultiVector() { ctor_impl<0, Vec0, Vecs...>(Base::begin()); }
 
 	/**
 	 * Internal method returning information about the I-th vector element. Do
