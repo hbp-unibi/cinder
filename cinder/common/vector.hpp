@@ -517,7 +517,7 @@ private:
 	 * returned from the info() method.
 	 */
 	template <size_t... Is>
-	static constexpr std::array<double, Size> scales(seq<Is...>)
+	static constexpr std::array<T, Size> scales(seq<Is...>)
 	{
 		return {{info<Is>().scale...}};
 	}
