@@ -276,5 +276,26 @@ TEST(vector, vector_inplace_arithmetic)
 		}
 	}
 }
+
+TEST(vector, equality)
+{
+	Vector<int, 3> v1({1, 2, 3});
+	Vector<int, 3> v2({1, 2, 3});
+	Vector<int, 3> v3({2, 2, 3});
+	Vector<int, 3> v4({1, 3, 3});
+	Vector<int, 3> v5({1, 2, 4});
+
+	EXPECT_TRUE(v1 == v2);
+	EXPECT_FALSE(v1 != v2);
+
+	EXPECT_TRUE(v1 != v3);
+	EXPECT_FALSE(v1 == v3);
+
+	EXPECT_TRUE(v1 != v4);
+	EXPECT_FALSE(v1 == v4);
+
+	EXPECT_TRUE(v1 != v5);
+	EXPECT_FALSE(v1 == v5);
+}
 }
 

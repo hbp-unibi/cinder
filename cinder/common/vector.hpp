@@ -159,6 +159,19 @@ private:
 		}
 	}
 
+	template <typename Func1, typename Func2, typename Other>
+	friend bool fold_bool(const Self &v1, const Other &v2, bool init, Func1 f1,
+	                      Func2 f2)
+	{
+		static_assert(Self::size() == Other::size(), "Vector size missmatch");
+
+		bool res = init;
+		for (size_t i = 0; i < v1.size(); i++) {
+			res = f2(res, f1(v1[i], v2[i]));
+		}
+		return res;
+	}
+
 public:
 	static constexpr size_t size() { return Size; }
 
@@ -321,6 +334,22 @@ public:
 	friend Inst operator/(const Self &v, value_type s)
 	{
 		return map(v, [s](value_type a) { return a / s; });
+	}
+
+	template <typename Other>
+	friend bool operator==(const Self &v1, const Other &v2)
+	{
+		return fold_bool(v1, v2, true,
+		                 [](value_type a, value_type b) { return a == b; },
+		                 [](bool a, bool b) { return a && b; });
+	}
+
+	template <typename Other>
+	friend bool operator!=(const Self &v1, const Other &v2)
+	{
+		return fold_bool(v1, v2, false,
+		                 [](value_type a, value_type b) { return a != b; },
+		                 [](bool a, bool b) { return a || b; });
 	}
 
 	/**
