@@ -42,7 +42,7 @@ TEST(vector, iterator)
 {
 	Vector<int, 8> vec({0, 1, 2, 3, 4, 5, 6, 7});
 	int i = 0;
-	for (int j: vec) {
+	for (int j : vec) {
 		EXPECT_EQ(i++, j);
 	}
 	EXPECT_EQ(8, i);
@@ -300,8 +300,12 @@ TEST(vector, equality)
 }
 
 namespace {
-struct TestVector: public VectorBase<TestVector, Real, 6> {
+struct TestVector : public VectorBase<TestVector, Real, 6> {
 	using VectorBase<TestVector, Real, 6>::VectorBase;
+
+	TestVector() {
+		a(42.0);
+	}
 
 	NAMED_VECTOR_ELEMENT(a, 0);
 	TYPED_VECTOR_ELEMENT(u, 1, Voltage);
@@ -310,6 +314,27 @@ struct TestVector: public VectorBase<TestVector, Real, 6> {
 	TYPED_VECTOR_ELEMENT(g, 4, Conductance);
 	TYPED_VECTOR_ELEMENT(t, 5, RealTime);
 };
+
+struct TestVector2 : public VectorBase<TestVector2, Real, 3> {
+	using VectorBase<TestVector2, Real, 3>::VectorBase;
+
+	TestVector2() {
+		b(84.0);
+	}
+
+	NAMED_VECTOR_ELEMENT(b, 0);
+	TYPED_VECTOR_ELEMENT(c, 1, Voltage);
+	TYPED_VECTOR_ELEMENT(d, 2, Current);
+};
+
+struct TestMultiVector
+    : public MultiVector<TestMultiVector, TestVector, TestVector2> {
+	using MultiVector<TestMultiVector, TestVector, TestVector2>::MultiVector;
+};
+
+static_assert(std::is_same<TestMultiVector::value_type, Real>::value,
+              "Invalid multi vector value type");
+static_assert(TestMultiVector::Size == 9, "Invalid multi vector size");
 }
 
 TEST(vector, named_elements)
@@ -344,5 +369,49 @@ TEST(vector, named_elements)
 	EXPECT_EQ(expected_scales, TestVector::scales());
 }
 
+TEST(multi_vector, named_elements) {
+	EXPECT_EQ("a", TestMultiVector::info<0>().name);
+	EXPECT_EQ("u", TestMultiVector::info<1>().name);
+	EXPECT_EQ("i", TestMultiVector::info<2>().name);
+	EXPECT_EQ("c", TestMultiVector::info<3>().name);
+	EXPECT_EQ("g", TestMultiVector::info<4>().name);
+	EXPECT_EQ("t", TestMultiVector::info<5>().name);
+	EXPECT_EQ("b", TestMultiVector::info<6>().name);
+	EXPECT_EQ("c", TestMultiVector::info<7>().name);
+	EXPECT_EQ("d", TestMultiVector::info<8>().name);
+
+	EXPECT_EQ("", TestMultiVector::info<0>().unit);
+	EXPECT_EQ("V", TestMultiVector::info<1>().unit);
+	EXPECT_EQ("A", TestMultiVector::info<2>().unit);
+	EXPECT_EQ("F", TestMultiVector::info<3>().unit);
+	EXPECT_EQ("S", TestMultiVector::info<4>().unit);
+	EXPECT_EQ("s", TestMultiVector::info<5>().unit);
+	EXPECT_EQ("", TestMultiVector::info<6>().unit);
+	EXPECT_EQ("V", TestMultiVector::info<7>().unit);
+	EXPECT_EQ("A", TestMultiVector::info<8>().unit);
+
+	EXPECT_EQ(1e0, TestMultiVector::info<0>().scale);
+	EXPECT_EQ(1e3, TestMultiVector::info<1>().scale);
+	EXPECT_EQ(1e9, TestMultiVector::info<2>().scale);
+	EXPECT_EQ(1e9, TestMultiVector::info<3>().scale);
+	EXPECT_EQ(1e6, TestMultiVector::info<4>().scale);
+	EXPECT_EQ(1e3, TestMultiVector::info<5>().scale);
+	EXPECT_EQ(1e0, TestMultiVector::info<6>().scale);
+	EXPECT_EQ(1e3, TestMultiVector::info<7>().scale);
+	EXPECT_EQ(1e9, TestMultiVector::info<8>().scale);
+
+	std::array<const char *, 9> expected_names = {"a", "u", "i", "c", "g", "t", "b", "c", "d"};
+	std::array<const char *, 9> expected_units = {"", "V", "A", "F", "S", "s", "", "V", "A"};
+	TestMultiVector expected_scales = {{1e0, 1e3, 1e9, 1e9, 1e6, 1e3, 1e0, 1e3, 1e9}};
+
+	EXPECT_EQ(expected_names, TestMultiVector::names());
+	EXPECT_EQ(expected_units, TestMultiVector::units());
+	EXPECT_EQ(expected_scales, TestMultiVector::scales());
+
+	TestMultiVector mv;
+
+	EXPECT_EQ(42.0_R, mv[0]);
+	EXPECT_EQ(84.0_R, mv[6]);
+}
 }
 

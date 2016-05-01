@@ -477,22 +477,6 @@ private:
 	const T *mem() const { return &m_arr[0]; }
 
 	/**
-	 * Internal method returning information about the I-th vector element. Do
-	 * not use this function directly.
-	 *
-	 * @tparam Accessor is a type which must provide an "I" constant specifying
-	 * the index of the element for which the run-time or compile-time
-	 * information should be returned.
-	 */
-	template <typename Accessor>
-	static constexpr VectorElementInfo element_info(Accessor)
-	{
-		static_assert(Accessor::I < Size,
-		              "Cannot access vector element info, index out of range");
-		return VectorElementInfo();
-	}
-
-	/**
 	 * Used internally to construct an array of names from the information
 	 * returned from the info() method.
 	 */
@@ -550,6 +534,22 @@ public:
 	constexpr VectorBase(const std::array<T, Size> &arr) : m_arr(arr) {}
 
 	/**
+	 * Internal method returning information about the I-th vector element. Do
+	 * not use this function directly, use info instead.
+	 *
+	 * @tparam Accessor is a type which must provide an "I" constant specifying
+	 * the index of the element for which the run-time or compile-time
+	 * information should be returned.
+	 */
+	template <typename Accessor>
+	static constexpr VectorElementInfo element_info(Accessor)
+	{
+		static_assert(Accessor::I < Size,
+		              "Cannot access vector element info, index out of range");
+		return VectorElementInfo();
+	}
+
+	/**
 	 * Returns information about the I-th vector element.
 	 *
 	 * @tparam I is the index of the vector element for which information should
@@ -605,6 +605,126 @@ template <typename T, size_t Size>
 class Vector final : public VectorBase<Vector<T, Size>, T, Size> {
 public:
 	using VectorBase<Vector, T, Size>::VectorBase;
+};
+
+/**
+ * Class used to calculate the total dimensionality of a state vector.
+ */
+template <typename... Ts>
+struct MultiVectorDim;
+
+template <>
+struct MultiVectorDim<> {
+	static constexpr size_t calculate() { return 0; }
+};
+
+template <typename T0, typename... Ts>
+struct MultiVectorDim<T0, Ts...> {
+	static constexpr size_t calculate()
+	{
+		return T0::size() + MultiVectorDim<Ts...>::calculate();
+	}
+};
+
+/**
+ * Vector type combining multiple other vector types into one while still
+ * allowing to call the introspection member functions such as names(), units(),
+ * scales() and info<I>().
+ */
+template <typename Inst_, typename Vec0, typename... Vecs>
+class MultiVector
+    : public VectorBase<Inst_, typename Vec0::value_type,
+                        MultiVectorDim<Vec0, Vecs...>::calculate()> {
+public:
+	using Base = VectorBase<Inst_, typename Vec0::value_type,
+	                        MultiVectorDim<Vec0, Vecs...>::calculate()>;
+	using Base::Base;
+
+private:
+	/**
+	 * Recursion termination for the element_info introspection method. Simply
+	 * calles the element_info method for the element with the index I - Offs
+	 * in the vector Vec0.
+	 */
+	template <size_t I, size_t Offs>
+	static constexpr VectorElementInfo element_info_impl()
+	{
+		return VectorElementInfo();
+	}
+
+	/**
+	 * Compile-time recursive method which obtains information about the I-th
+	 * element by going over each vector the MultiVector class is constituted
+	 * of.
+	 */
+	template <size_t I, size_t Offs, typename V0, typename... Vs>
+	static constexpr VectorElementInfo element_info_impl()
+	{
+		return I - Offs < V0::Size
+		           ? V0::template info<(I - Offs) % V0::Size>()
+		           : element_info_impl<I, Offs + V0::Size, Vs...>();
+	}
+
+	/**
+	 * Recursion termination of the compile-time recursive implementation of
+	 * ctor_impl().
+	 */
+	template <size_t Offs>
+	static void ctor_impl(std::array<typename Base::value_type, Base::Size> &)
+	{
+	}
+
+	/**
+	 * Compile-time recursive implementation of the default constructor, calls
+	 * the constructor of all the Vector types the MultiVector is composed of.
+	 */
+	template <size_t Offs, typename V0, typename... Vs>
+	static void ctor_impl(
+	    std::array<typename Base::value_type, Base::Size> &tar)
+	{
+		// Call the default constructor of V0, copy the elements into the target
+		// array
+		auto arr = V0().as_array();
+		std::copy(arr.begin(), arr.begin() + V0::Size, tar.begin() + Offs);
+
+		// Recursively continue with the next type
+		ctor_impl<Offs + V0::Size, Vs...>(tar);
+	}
+
+	/**
+	 * Compile-time recursive implementation of the default constructor. Creates
+	 * the target array and continues with the inner ctor_impl() method.
+	 */
+	template <size_t Offs, typename V0, typename... Vs>
+	static std::array<typename Base::value_type, Base::Size> ctor_impl()
+	{
+		// Create the target array and start the recursion
+		std::array<typename Base::value_type, Base::Size> res;
+		ctor_impl<Offs, V0, Vs...>(res);
+		return res;
+	}
+
+public:
+	/**
+	 * Default constructor: recursively call the internal default constructors.
+	 */
+	MultiVector() : Base(ctor_impl<0, Vec0, Vecs...>()) {}
+
+	/**
+	 * Internal method returning information about the I-th vector element. Do
+	 * not use this function directly.
+	 *
+	 * @tparam Accessor is a type which must provide an "I" constant specifying
+	 * the index of the element for which the run-time or compile-time
+	 * information should be returned.
+	 */
+	template <typename Accessor>
+	static constexpr VectorElementInfo element_info(Accessor)
+	{
+		static_assert(Accessor::I < Base::Size,
+		              "Cannot access vector element info, index out of range");
+		return element_info_impl<Accessor::I, 0, Vec0, Vecs...>();
+	}
 };
 
 #define NAMED_VECTOR_ELEMENT(NAME, IDX)                                \
