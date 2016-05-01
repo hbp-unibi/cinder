@@ -38,6 +38,8 @@
 #include <iostream>
 #include <type_traits>
 
+#include <cinder/common/array_utils.hpp>
+
 namespace cinder {
 
 /*
@@ -48,6 +50,49 @@ class Vector;
 
 template <typename T, size_t>
 class VectorView;
+
+/**
+ * The VectorElementInfo structure stores information about the entry of a
+ * vector. For example, the Vector class is used to represent the neuron
+ * parameters -- the VectorElementInfo struct is then used to access the unit
+ * and name of each parameter at runtime.
+ */
+struct VectorElementInfo {
+	/**
+	 * Name of the vector element. In a parameter vector a name could for
+	 * example be "v_rest" for the resting potential of a neuron membrane.
+	 */
+	const char *name;
+
+	/**
+	 * Physical unit of the vector element. Should be an empty string if this
+	 * is a unit-less element. Value should be without the SI prefix. For
+	 * example, for a value describing a voltage, set unit to "V".
+	 */
+	const char *unit;
+
+	/**
+	 * Typical scale factor the values should be multiplied with to have the
+	 * values in a unit-range without requiring an exponential. For example, if
+	 * the values are mostly in a millivolt range, set scale to 1e3.
+	 */
+	double scale;
+
+	/**
+	 * Constructor of the VectorElementInfo class.
+	 *
+	 * @param name is the name of the vector element.
+	 * @param unit is the physical unit of the vector element (if present)
+	 * without SI suffix.
+	 * @param scale is a scale factors the values should be multiplied with
+	 * to get to a human-readable range without requiring exponential notation.
+	 */
+	constexpr VectorElementInfo(const char *name = "", const char *unit = "",
+	                            double scale = 1e0)
+	    : name(name), unit(unit), scale(scale)
+	{
+	}
+};
 
 /**
  * The VectorMixin class defines basic functionality that should be provided by
@@ -431,6 +476,62 @@ private:
 	 */
 	const T *mem() const { return &m_arr[0]; }
 
+	/**
+	 * Internal method returning information about the I-th vector element. Do
+	 * not use this function directly.
+	 *
+	 * @tparam Accessor is a type which must provide an "I" constant specifying
+	 * the index of the element for which the run-time or compile-time
+	 * information should be returned.
+	 */
+	template <typename Accessor>
+	static constexpr VectorElementInfo element_info(Accessor t)
+	{
+		static_assert(Accessor::I < Size,
+		              "Cannot access vector element info, index out of range");
+		return VectorElementInfo();
+	}
+
+	/**
+	 * Used internally to construct an array of names from the information
+	 * returned from the info() method.
+	 */
+	template <size_t... Is>
+	static constexpr std::array<const char *, Size> names(seq<Is...>)
+	{
+		return {{info<Is>().name...}};
+	}
+
+	/**
+	 * Used internally to construct an array of units from the information
+	 * returned from the info() method.
+	 */
+	template <size_t... Is>
+	static constexpr std::array<const char *, Size> units(seq<Is...>)
+	{
+		return {{info<Is>().unit...}};
+	}
+
+	/**
+	 * Used internally to construct an array of units from the information
+	 * returned from the info() method.
+	 */
+	template <size_t... Is>
+	static constexpr std::array<double, Size> scales(seq<Is...>)
+	{
+		return {{info<Is>().scale...}};
+	}
+
+protected:
+	/**
+	 * Small template type used for accessing element-specific information by
+	 * the mechanism of function overloads.
+	 */
+	template <size_t I_>
+	struct InfoAccessor {
+		static constexpr size_t I = I_;
+	};
+
 public:
 	using Self = VectorBase<Inst_, T, Size>;
 	using Inst = Inst_;
@@ -447,6 +548,52 @@ public:
 	 * containing the vector elements.
 	 */
 	constexpr VectorBase(const std::array<T, Size> &arr) : m_arr(arr) {}
+
+	/**
+	 * Returns information about the I-th vector element.
+	 *
+	 * @tparam I is the index of the vector element for which information should
+	 * be returned.
+	 */
+	template <size_t I>
+	static constexpr VectorElementInfo info()
+	{
+		return Inst::element_info(InfoAccessor<I>());
+	}
+
+	/**
+	 * Returns the names of the vector elements.
+	 *
+	 * @return an array of the size of the vector containing the name of each
+	 * element.
+	 */
+	static constexpr std::array<const char *, Size> names()
+	{
+		return names(gen_seq<Size>());
+	}
+
+	/**
+	 * Returns the units of the vector elements.
+	 *
+	 * @return an array of the size of the vector containing the physical unit
+	 * of each element.
+	 */
+	static constexpr std::array<const char *, Size> units()
+	{
+		return units(gen_seq<Size>());
+	}
+
+	/**
+	 * Returns the scales of the vector elements. The scale corresponds to the
+	 * value each element has to be multiplied with to typically transform it
+	 * into a value range where it can be represented without an exponent.
+	 * Appart from visualisation purposes, the scales() method is used by the
+	 * DormandPrince integrator to normalise the error values of each component.
+	 *
+	 * @return an instance of this vector where each element corresponds to the
+	 * scalue the elements typically should be multiplied with.
+	 */
+	static constexpr Inst scales() { return Inst(scales(gen_seq<Size>())); }
 };
 
 /**
@@ -460,23 +607,31 @@ public:
 	using VectorBase<Vector, T, Size>::VectorBase;
 };
 
-#define NAMED_VECTOR_ELEMENT(NAME, IDX)         \
-	static constexpr size_t idx_##NAME = IDX;   \
-	Inst &NAME(value_type x)                    \
-	{                                           \
-		(*this)[IDX] = x;                       \
-		return static_cast<Inst &>(*this);      \
-	}                                           \
-	value_type &NAME() { return (*this)[IDX]; } \
+#define NAMED_VECTOR_ELEMENT(NAME, IDX)                                \
+	static constexpr size_t idx_##NAME = IDX;                          \
+	static constexpr VectorElementInfo element_info(InfoAccessor<IDX>) \
+	{                                                                  \
+		return VectorElementInfo(#NAME);                               \
+	}                                                                  \
+	Inst &NAME(value_type x)                                           \
+	{                                                                  \
+		(*this)[IDX] = x;                                              \
+		return static_cast<Inst &>(*this);                             \
+	}                                                                  \
+	value_type &NAME() { return (*this)[IDX]; }                        \
 	value_type NAME() const { return (*this)[IDX]; }
 
-#define TYPED_VECTOR_ELEMENT(NAME, IDX, TYPE) \
-	static constexpr size_t idx_##NAME = IDX; \
-	Inst &NAME(TYPE x)                        \
-	{                                         \
-		(*this)[IDX] = x.v();                 \
-		return static_cast<Inst &>(*this);    \
-	}                                         \
+#define TYPED_VECTOR_ELEMENT(NAME, IDX, TYPE)                          \
+	static constexpr size_t idx_##NAME = IDX;                          \
+	static constexpr VectorElementInfo element_info(InfoAccessor<IDX>) \
+	{                                                                  \
+		return VectorElementInfo(#NAME, TYPE::unit(), TYPE::scale());  \
+	}                                                                  \
+	Inst &NAME(TYPE x)                                                 \
+	{                                                                  \
+		(*this)[IDX] = x.v();                                          \
+		return static_cast<Inst &>(*this);                             \
+	}                                                                  \
 	TYPE NAME() const { return TYPE((*this)[IDX]); }
 }
 

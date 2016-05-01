@@ -19,6 +19,7 @@
 #include "gtest/gtest.h"
 
 #include <cinder/common/vector.hpp>
+#include <cinder/common/types.hpp>
 
 namespace cinder {
 
@@ -297,5 +298,51 @@ TEST(vector, equality)
 	EXPECT_TRUE(v1 != v5);
 	EXPECT_FALSE(v1 == v5);
 }
+
+namespace {
+struct TestVector: public VectorBase<TestVector, Real, 6> {
+	using VectorBase<TestVector, Real, 6>::VectorBase;
+
+	NAMED_VECTOR_ELEMENT(a, 0);
+	TYPED_VECTOR_ELEMENT(u, 1, Voltage);
+	TYPED_VECTOR_ELEMENT(i, 2, Current);
+	TYPED_VECTOR_ELEMENT(c, 3, Capacitance);
+	TYPED_VECTOR_ELEMENT(g, 4, Conductance);
+	TYPED_VECTOR_ELEMENT(t, 5, RealTime);
+};
+}
+
+TEST(vector, named_elements)
+{
+	EXPECT_EQ("a", TestVector::info<0>().name);
+	EXPECT_EQ("u", TestVector::info<1>().name);
+	EXPECT_EQ("i", TestVector::info<2>().name);
+	EXPECT_EQ("c", TestVector::info<3>().name);
+	EXPECT_EQ("g", TestVector::info<4>().name);
+	EXPECT_EQ("t", TestVector::info<5>().name);
+
+	EXPECT_EQ("", TestVector::info<0>().unit);
+	EXPECT_EQ("V", TestVector::info<1>().unit);
+	EXPECT_EQ("A", TestVector::info<2>().unit);
+	EXPECT_EQ("F", TestVector::info<3>().unit);
+	EXPECT_EQ("S", TestVector::info<4>().unit);
+	EXPECT_EQ("s", TestVector::info<5>().unit);
+
+	EXPECT_EQ(1e0, TestVector::info<0>().scale);
+	EXPECT_EQ(1e3, TestVector::info<1>().scale);
+	EXPECT_EQ(1e9, TestVector::info<2>().scale);
+	EXPECT_EQ(1e9, TestVector::info<3>().scale);
+	EXPECT_EQ(1e6, TestVector::info<4>().scale);
+	EXPECT_EQ(1e3, TestVector::info<5>().scale);
+
+	std::array<const char *, 6> expected_names = {"a", "u", "i", "c", "g", "t"};
+	std::array<const char *, 6> expected_units = {"", "V", "A", "F", "S", "s"};
+	TestVector expected_scales = {{1e0, 1e3, 1e9, 1e9, 1e6, 1e3}};
+
+	EXPECT_EQ(expected_names, TestVector::names());
+	EXPECT_EQ(expected_units, TestVector::units());
+	EXPECT_EQ(expected_scales, TestVector::scales());
+}
+
 }
 
