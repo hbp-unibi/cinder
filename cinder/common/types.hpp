@@ -99,6 +99,19 @@ private:
 
 public:
 	/**
+	 * Returns the physical unit of the represented quantity.
+	 */
+	static constexpr const char *unit() { return ""; }
+
+	/**
+	 * Returns the typical scale of the used physical unit. Values should be
+	 * multiplied with this scale to get a human-readable value without any
+	 * exponent. For example, voltages are always in the millivolt range, so in
+	 * this case, 1e3 is returned.
+	 */
+	static constexpr double scale() { return 1e0; }
+
+	/**
 	 * Default constructor. Default-initializes the encapsulated value.
 	 */
 	constexpr Quantity() : m_val(T()) {}
@@ -123,14 +136,16 @@ public:
 		return Impl(q1.v() + q2.v());
 	}
 
-	constexpr Impl& operator+=(const Self &q) {
+	constexpr Impl &operator+=(const Self &q)
+	{
 		m_val += q.v();
-		return static_cast<Impl&>(*this);
+		return static_cast<Impl &>(*this);
 	}
 
-	constexpr Impl& operator-=(const Self &q) {
+	constexpr Impl &operator-=(const Self &q)
+	{
 		m_val -= q.v();
-		return static_cast<Impl&>(*this);
+		return static_cast<Impl &>(*this);
 	}
 
 	friend constexpr Impl operator-(const Self &q1, const Self &q2)
@@ -169,24 +184,39 @@ public:
  */
 struct Current : public Quantity<Current, Real> {
 	using Quantity<Current, Real>::Quantity;
+
+	static constexpr const char *unit() { return "A"; }
+	static constexpr double scale() { return 1e9; }
 };
 
 struct Voltage : public Quantity<Voltage, Real> {
 	using Quantity<Voltage, Real>::Quantity;
+
+	static constexpr const char *unit() { return "V"; }
+	static constexpr double scale() { return 1e3; }
 };
 
 struct Conductance : public Quantity<Conductance, Real> {
 	using Quantity<Conductance, Real>::Quantity;
+
+	static constexpr const char *unit() { return "S"; }
+	static constexpr double scale() { return 1e6; }
 };
 
 struct Capacitance : public Quantity<Capacitance, Real> {
 	using Quantity<Capacitance, Real>::Quantity;
+
+	static constexpr const char *unit() { return "F"; }
+	static constexpr double scale() { return 1e9; }
 };
 
 struct RealTime : public Quantity<RealTime, Real> {
 	using Quantity<RealTime, Real>::Quantity;
 	constexpr RealTime() : Quantity<RealTime, Real>() {}
 	constexpr RealTime(Time t) : Quantity<RealTime, Real>(t.sec()) {}
+
+	static constexpr const char *unit() { return "s"; }
+	static constexpr double scale() { return 1e3; }
 };
 
 #define DEFINE_SUFFIX(CLASS, PREFIX, SUFFIX, FAC)                      \
