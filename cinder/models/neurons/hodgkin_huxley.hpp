@@ -46,11 +46,6 @@ struct HodgkinHuxleyState : public VectorBase<HodgkinHuxleyState, Real, 4> {
 	NAMED_VECTOR_ELEMENT(n, 1);
 	NAMED_VECTOR_ELEMENT(m, 2);
 	NAMED_VECTOR_ELEMENT(h, 3);
-
-	static constexpr HodgkinHuxleyState scale()
-	{
-		return HodgkinHuxleyState({1e3, 1e0, 1e0, 1e0});
-	}
 };
 
 /**

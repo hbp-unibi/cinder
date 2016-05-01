@@ -52,21 +52,19 @@ namespace cinder {
  * the low-pass filtered current, the second state component the current without
  * low-pass filter.
  */
-struct AlphaCurrentState : public VectorBase<AlphaCurrentState, Real, 2> {
-	using VectorBase<AlphaCurrentState, Real, 2>::VectorBase;
+struct CurAlphaState : public VectorBase<CurAlphaState, Real, 2> {
+	using VectorBase<CurAlphaState, Real, 2>::VectorBase;
 
-	static constexpr AlphaCurrentState scale()
-	{
-		return AlphaCurrentState({1e9, 1e9});
-	}
+	TYPED_VECTOR_ELEMENT(i_syn, 0, Current);
+	TYPED_VECTOR_ELEMENT(i_syn_exp, 1, Current);
 };
 
 /**
  * Alpha-function shaped current-based synapse.
  */
-struct CurAlpha : public SynapseBase<CurAlpha, AlphaCurrentState> {
+struct CurAlpha : public SynapseBase<CurAlpha, CurAlphaState> {
 private:
-	friend SynapseBase<CurAlpha, AlphaCurrentState>;
+	friend SynapseBase<CurAlpha, CurAlphaState>;
 
 	Real m_w;
 	Real m_tau_inv;
@@ -80,7 +78,7 @@ private:
 public:
 	CurAlpha(Current w, Time tau,
 	         const std::vector<Spike> &input_spikes = std::vector<Spike>())
-	    : SynapseBase<CurAlpha, AlphaCurrentState>(input_spikes),
+	    : SynapseBase<CurAlpha, CurAlphaState>(input_spikes),
 	      m_w(w.v() * 2.718281828_R),
 	      m_tau_inv(1.0_R / tau.sec())
 	{

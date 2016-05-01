@@ -46,11 +46,6 @@ struct IzhikevichState : public VectorBase<IzhikevichState, Real, 2> {
 
 	TYPED_VECTOR_ELEMENT(v, 0, Voltage);
 	NAMED_VECTOR_ELEMENT(u, 1);
-
-	static constexpr IzhikevichState scale()
-	{
-		return IzhikevichState({1e3, 1e0});
-	}
 };
 
 /**

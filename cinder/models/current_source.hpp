@@ -62,8 +62,6 @@ struct CurrentSourceBase : public ODEBase<State_> {
  */
 struct NullState : public VectorBase<NullState, Real, 0> {
 	using VectorBase<NullState, Real, 0>::VectorBase;
-
-	static constexpr NullState scale() { return NullState(); }
 };
 
 /**
@@ -72,10 +70,7 @@ struct NullState : public VectorBase<NullState, Real, 0> {
 struct SingleCurrentState : public VectorBase<SingleCurrentState, Real, 1> {
 	using VectorBase<SingleCurrentState, Real, 1>::VectorBase;
 
-	static constexpr SingleCurrentState scale()
-	{
-		return SingleCurrentState({1e9});
-	}
+	TYPED_VECTOR_ELEMENT(i, 0, Current);
 };
 
 /**

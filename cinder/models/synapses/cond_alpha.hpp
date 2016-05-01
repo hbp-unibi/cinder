@@ -52,22 +52,19 @@ namespace cinder {
  * the low-pass filtered conductance, the second state component the conductance
  * without low-pass filter.
  */
-struct AlphaConductanceState
-    : public VectorBase<AlphaConductanceState, Real, 2> {
-	using VectorBase<AlphaConductanceState, Real, 2>::VectorBase;
+struct CondAlphaState : public VectorBase<CondAlphaState, Real, 2> {
+	using VectorBase<CondAlphaState, Real, 2>::VectorBase;
 
-	static constexpr AlphaConductanceState scale()
-	{
-		return AlphaConductanceState({1e6, 1e6});
-	}
+	TYPED_VECTOR_ELEMENT(g_syn, 0, Conductance);
+	TYPED_VECTOR_ELEMENT(g_syn_exp, 1, Conductance);
 };
 
 /**
  * Alpha-function shaped conductance-based synapse.
  */
-struct CondAlpha : public SynapseBase<CondAlpha, AlphaConductanceState> {
+struct CondAlpha : public SynapseBase<CondAlpha, CondAlphaState> {
 private:
-	friend SynapseBase<CondAlpha, AlphaConductanceState>;
+	friend SynapseBase<CondAlpha, CondAlphaState>;
 
 	Real m_w;
 	Real m_tau_inv;
@@ -82,7 +79,7 @@ private:
 public:
 	CondAlpha(Conductance w, Time tau, Voltage e_rev,
 	          const std::vector<Spike> &input_spikes = std::vector<Spike>())
-	    : SynapseBase<CondAlpha, AlphaConductanceState>(input_spikes),
+	    : SynapseBase<CondAlpha, CondAlphaState>(input_spikes),
 	      m_w(w.v() * 2.718281828_R),
 	      m_tau_inv(1.0_R / tau.sec()),
 	      m_e_rev(e_rev)

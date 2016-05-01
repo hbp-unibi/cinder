@@ -42,8 +42,6 @@ struct AdExState : public VectorBase<AdExState, Real, 2> {
 
 	TYPED_VECTOR_ELEMENT(v, 0, Voltage);
 	TYPED_VECTOR_ELEMENT(w, 1, Current);
-
-	static constexpr AdExState scale() { return AdExState({1e3, 1e9}); }
 };
 
 /**

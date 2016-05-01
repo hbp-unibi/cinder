@@ -92,34 +92,6 @@ struct ODEBase {
 	}
 };
 
-namespace internal {
-/**
- * Class used to calculate the total dimensionality of a state vector.
- */
-template <typename... T>
-struct Dim;
-
-template <>
-struct Dim<> {
-	static constexpr size_t calculate() { return 0; }
-};
-
-template <typename H, typename... T>
-struct Dim<H, T...> {
-	static constexpr size_t calculate()
-	{
-		using State = typename H::State;
-		return State::size() + Dim<T...>::calculate();
-	}
-};
-
-template <typename... T>
-static constexpr size_t dim()
-{
-	return Dim<T...>::calculate();
-}
-}
-
 /**
  * Class allowing to concatenate multiple ODE classes into one.
  */
@@ -129,28 +101,8 @@ public:
 	/**
 	 * State vector representing the entire system.
 	 */
-	class State : public VectorBase<State, Real, internal::dim<T...>()> {
-	private:
-		template <size_t I>
-		static constexpr auto scale_impl()
-		{
-			return std::array<Real, 0>();
-		}
-
-		template <size_t I, typename T0, typename... Ts>
-		static constexpr auto scale_impl()
-		{
-			return concat<Real>(T0::State::scale().as_array(),
-			                              scale_impl<0, Ts...>());
-		}
-
-	public:
-		using VectorBase<State, Real, internal::dim<T...>()>::VectorBase;
-
-		static constexpr State scale()
-		{
-			return State(scale_impl<0, T...>());
-		}
+	class State : public MultiVector<State, typename T::State...>  {
+		using MultiVector<State, typename T::State...>::MultiVector;
 	};
 
 protected:

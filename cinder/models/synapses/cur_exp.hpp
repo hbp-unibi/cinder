@@ -33,11 +33,20 @@
 
 namespace cinder {
 /**
+ * State vector used by the CurExp synape type.
+ */
+struct CurExpState : public VectorBase<CurExpState, Real, 1> {
+	using VectorBase<CurExpState, Real, 1>::VectorBase;
+
+	TYPED_VECTOR_ELEMENT(i_syn, 0, Current);
+};
+
+/**
  * Current based synapse with exponential decay.
  */
-struct CurExp : public SynapseBase<CurExp, SingleCurrentState> {
+struct CurExp : public SynapseBase<CurExp, CurExpState> {
 private:
-	friend SynapseBase<CurExp, SingleCurrentState>;
+	friend SynapseBase<CurExp, CurExpState>;
 
 	Current m_w;
 	Real m_tau_inv;
@@ -52,7 +61,7 @@ private:
 public:
 	CurExp(Current w, Time tau,
 	       const std::vector<Spike> &input_spikes = std::vector<Spike>())
-	    : SynapseBase<CurExp, SingleCurrentState>(input_spikes),
+	    : SynapseBase<CurExp, CurExpState>(input_spikes),
 	      m_w(w),
 	      m_tau_inv(1.0_R / tau.sec())
 	{

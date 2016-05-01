@@ -40,8 +40,6 @@ struct LIFState : public VectorBase<LIFState, Real, 1> {
 	using VectorBase<LIFState, Real, 1>::VectorBase;
 
 	TYPED_VECTOR_ELEMENT(v, 0, Voltage);
-
-	static constexpr LIFState scale() { return LIFState({1e3}); }
 };
 
 /**

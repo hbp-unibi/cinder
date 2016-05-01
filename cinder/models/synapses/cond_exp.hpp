@@ -35,19 +35,18 @@ namespace cinder {
 /**
  * State vector used for the conductance based neuron.
  */
-struct SingleConductanceState
-    : public VectorBase<SingleConductanceState, Real, 1> {
-	using VectorBase<SingleConductanceState, Real, 1>::VectorBase;
+struct CondExpState : public VectorBase<CondExpState, Real, 1> {
+	using VectorBase<CondExpState, Real, 1>::VectorBase;
 
-	static constexpr SingleConductanceState scale() { return SingleConductanceState({1e6}); }
+	TYPED_VECTOR_ELEMENT(g_syn, 0, Conductance);
 };
 
 /**
  * Current based synapse with exponential decay.
  */
-struct CondExp : public SynapseBase<CondExp, SingleConductanceState> {
+struct CondExp : public SynapseBase<CondExp, CondExpState> {
 private:
-	friend SynapseBase<CondExp, SingleConductanceState>;
+	friend SynapseBase<CondExp, CondExpState>;
 
 	Conductance m_w;
 	Real m_tau_inv;
@@ -63,7 +62,7 @@ private:
 public:
 	CondExp(Conductance w, Time tau, Voltage e_rev,
 	        const std::vector<Spike> &input_spikes = std::vector<Spike>())
-	    : SynapseBase<CondExp, SingleConductanceState>(input_spikes),
+	    : SynapseBase<CondExp, CondExpState>(input_spikes),
 	      m_w(w),
 	      m_tau_inv(1.0_R / tau.sec()),
 	      m_e_rev(e_rev)
