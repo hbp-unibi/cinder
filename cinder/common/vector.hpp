@@ -485,7 +485,7 @@ private:
 	 * information should be returned.
 	 */
 	template <typename Accessor>
-	static constexpr VectorElementInfo element_info(Accessor t)
+	static constexpr VectorElementInfo element_info(Accessor)
 	{
 		static_assert(Accessor::I < Size,
 		              "Cannot access vector element info, index out of range");
