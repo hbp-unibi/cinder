@@ -44,8 +44,8 @@ namespace cinder {
  * Base class from which synapse implementations should derive. Implements the
  * handling
  */
-template <typename Impl, typename StateImpl>
-struct SynapseBase : public CurrentSourceBase<StateImpl> {
+template <typename Impl, typename State_>
+struct SynapseBase : public CurrentSourceBase<State_> {
 private:
 	std::priority_queue<Spike, std::vector<Spike>, std::greater<Spike>>
 	    m_input_spikes;

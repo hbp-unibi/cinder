@@ -45,8 +45,8 @@ namespace cinder {
  *
  * @tparam State is the neuron
  */
-template <typename StateImpl>
-struct CurrentSourceBase : public ODEBase<StateImpl> {
+template <typename State_>
+struct CurrentSourceBase : public ODEBase<State_> {
 	/**
 	 * Retrieves the current from the given state vector.
 	 */
