@@ -25,3 +25,10 @@ target_link_libraries(izhikevich_cond_alpha
 	cinder
 )
 
+add_executable(izhikevich_sweep_constant_current
+	izhikevich_sweep_constant_current
+)
+target_link_libraries(izhikevich_sweep_constant_current
+	cinder
+)
+
