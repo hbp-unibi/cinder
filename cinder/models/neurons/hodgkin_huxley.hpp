@@ -136,13 +136,13 @@ private:
 	struct EvaluatedChannelDynamics {
 		const Real alpha_n, beta_n, alpha_m, beta_m, alpha_h, beta_h;
 
-		EvaluatedChannelDynamics(const Real v, const HodgkinHuxleyParameters &p)
-		    : alpha_n(ChannelDynamics::alpha_n(v, p)),
-		      beta_n(ChannelDynamics::beta_n(v, p)),
-		      alpha_m(ChannelDynamics::alpha_m(v, p)),
-		      beta_m(ChannelDynamics::beta_m(v, p)),
-		      alpha_h(ChannelDynamics::alpha_h(v, p)),
-		      beta_h(ChannelDynamics::beta_h(v, p))
+		EvaluatedChannelDynamics(const Real v)
+		    : alpha_n(ChannelDynamics::alpha_n(v)),
+		      beta_n(ChannelDynamics::beta_n(v)),
+		      alpha_m(ChannelDynamics::alpha_m(v)),
+		      beta_m(ChannelDynamics::beta_m(v)),
+		      alpha_h(ChannelDynamics::alpha_h(v)),
+		      beta_h(ChannelDynamics::beta_h(v))
 		{
 		}
 	};
@@ -168,8 +168,8 @@ public:
 
 	HodgkinHuxleyState s0() const
 	{
-		EvaluatedChannelDynamics x(
-		    (p().e_rev_leak() - p().v_offset()) * Real(1e3), p());
+		EvaluatedChannelDynamics x((p().e_rev_leak() - p().v_offset()) *
+		                           Real(1e3));
 		return HodgkinHuxleyState({p().v_rest(),
 		                           x.alpha_n / (x.alpha_n + x.beta_n),
 		                           x.alpha_m / (x.alpha_m + x.beta_m),
@@ -193,7 +193,7 @@ public:
 		const Real dtV = (i_syn - (i_Na + i_K + i_l)) / p().cm();
 
 		const Real v = (s[0] - p().v_offset()) * Real(1e3);  // Convert V to mV
-		const EvaluatedChannelDynamics x(v, p());
+		const EvaluatedChannelDynamics x(v);
 		const Real dtN = (x.alpha_n - (x.alpha_n + x.beta_n) * n) * Real(1e3);
 		const Real dtM = (x.alpha_m - (x.alpha_m + x.beta_m) * m) * Real(1e3);
 		const Real dtH = (x.alpha_h - (x.alpha_h + x.beta_h) * h) * Real(1e3);
@@ -229,35 +229,36 @@ public:
  * hh_cond_exp_traub model.
  */
 struct TraubChannelDynamics {
-	static Real alpha_n(Real V, const HodgkinHuxleyParameters &)
+class TraubChannelDynamics {
+	static Real alpha_n(Real V)
 	{
 		return Real(0.032) * (Real(15.0) - V) /
 		       (std::exp((Real(15.) - V) / Real(5.)) - Real(1.));
 	}
 
-	static Real beta_n(Real V, const HodgkinHuxleyParameters &)
+	static Real beta_n(Real V)
 	{
 		return Real(0.5) * std::exp((Real(10.) - V) / Real(40.));
 	}
 
-	static Real alpha_m(Real V, const HodgkinHuxleyParameters &)
+	static Real alpha_m(Real V)
 	{
 		return Real(0.32) * (Real(13.) - V) /
 		       (std::exp((Real(13.) - V) / Real(4.)) - Real(1.));
 	}
 
-	static Real beta_m(Real V, const HodgkinHuxleyParameters &)
+	static Real beta_m(Real V)
 	{
 		return Real(0.28) * (V - Real(40.)) /
 		       (std::exp((V - Real(40.)) / Real(5.)) - Real(1.));
 	}
 
-	static Real alpha_h(Real V, const HodgkinHuxleyParameters &)
+	static Real alpha_h(Real V)
 	{
 		return Real(0.128) * std::exp((Real(17.) - V) / Real(18.));
 	}
 
-	static Real beta_h(Real V, const HodgkinHuxleyParameters &)
+	static Real beta_h(Real V)
 	{
 		return Real(4.) / (Real(1.) + std::exp((Real(40.) - V) / Real(5.)));
 	}
