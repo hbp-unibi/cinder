@@ -38,6 +38,7 @@
 #include <iostream>
 #include <string>
 #include <type_traits>
+#include <tuple>
 
 #include <cinder/common/array_utils.hpp>
 
@@ -648,7 +649,7 @@ public:
 };
 
 /**
- * Class used to calculate the total dimensionality of a state vector.
+ * Class used to calculate the total dimensionality of multi vector.
  */
 template <typename... Ts>
 struct MultiVectorDim;
@@ -667,6 +668,27 @@ struct MultiVectorDim<T0, Ts...> {
 };
 
 /**
+ * Class used to calculate the offset of the i-th element in a state vector.
+ */
+template <size_t I, typename... Ts>
+struct MultiVectorOffs;
+
+template <size_t I>
+struct MultiVectorOffs<I> {
+	static constexpr size_t calculate() { return 0; }
+};
+
+template <size_t I, typename T0, typename... Ts>
+struct MultiVectorOffs<I, T0, Ts...> {
+	static constexpr size_t calculate()
+	{
+		return I == 0
+		           ? 0
+		           : (T0::size() + MultiVectorOffs<I - 1, Ts...>::calculate());
+	}
+};
+
+/**
  * Vector type combining multiple other vector types into one while still
  * allowing to call the introspection member functions such as names(), units(),
  * scales() and info<I>().
@@ -679,6 +701,12 @@ public:
 	using Base = VectorBase<Inst_, typename Vec0::value_type,
 	                        MultiVectorDim<Vec0, Vecs...>::calculate()>;
 	using Base::Base;
+
+	/**
+	 * Shorthand which allows to access the type of the i-th vector element.
+	 */
+	template <size_t I>
+	using Vec = typename std::tuple_element<I, std::tuple<Vec0, Vecs...>>::type;
 
 private:
 	/**
@@ -704,9 +732,7 @@ private:
 	};
 
 	/**
-	 * Recursion termination for the element_info introspection method. Simply
-	 * calles the element_info method for the element with the index I - Offs
-	 * in the vector Vec0.
+	 * Recursion termination for the element_info introspection method.
 	 */
 	template <size_t I, size_t Offs>
 	static constexpr VectorElementInfo element_info_impl()
@@ -775,11 +801,83 @@ private:
 		ctor_impl<Offs + V0::Size, Vs...>(tar);
 	}
 
+	/**
+	 * Recursion termination of the compile-time recursive implementation of
+	 * assign_impl().
+	 */
+	template <size_t Offs>
+	void assign_impl()
+	{
+	}
+
+	/**
+	 * Compile-time recursive implementation of constructor which takes a number
+	 * of vector instances and assembles the MultiVector instance.
+	 * Constructs the inner vectors at the corresponding memory addresses.
+	 */
+	template <size_t Offs, typename V0, typename... Vs>
+	void assign_impl(const V0 &v0, const Vs &... vs)
+	{
+		Base::template view<V0::Size, Offs>().assign(v0);
+		assign_impl<Offs + V0::Size, Vs...>(vs...);
+	}
+
 public:
 	/**
 	 * Default constructor: recursively call the inner default constructors.
 	 */
 	MultiVector() { ctor_impl<0, Vec0, Vecs...>(Base::begin()); }
+
+	/**
+	 * Constructor creating a multi vector with the values stored in the given
+	 * vector instances.
+	 */
+	MultiVector(const Vec0 &v0, const Vecs &... vs)
+	{
+		assign_impl<0, Vec0, Vecs...>(v0, vs...);
+	}
+
+	/**
+	 * Extracts a read-only view of the i-th vector from the compund vector.
+	 *
+	 * @tparam I is the index of the underlying vector the MultiVector instance
+	 * is composed of.
+	 */
+	template <size_t I>
+	auto get_view() const
+	{
+		constexpr size_t Offs = MultiVectorOffs<I, Vec0, Vecs...>::calculate();
+		constexpr size_t Size = Vec<I>::Size;
+		return Base::template view<Size, Offs>();
+	}
+
+	/**
+	 * Extracts a view of the i-th vector from the compund vector.
+	 *
+	 * @tparam I is the index of the underlying vector the MultiVector instance
+	 * is composed of.
+	 */
+	template <size_t I>
+	auto get_view()
+	{
+		constexpr size_t Offs = MultiVectorOffs<I, Vec0, Vecs...>::calculate();
+		constexpr size_t Size = Vec<I>::Size;
+		return Base::template view<Size, Offs>();
+	}
+
+	/**
+	 * Extracts a copy of the i-th vector from the compund vector.
+	 *
+	 * @tparam I is the index of the underlying vector the MultiVector instance
+	 * is composed of.
+	 */
+	template <size_t I>
+	Vec<I> get() const
+	{
+		Vec<I> res;
+		res.assign(get_view<I>());
+		return res;
+	}
 
 	/**
 	 * Internal method returning information about the I-th vector element. Do

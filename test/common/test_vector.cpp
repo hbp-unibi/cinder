@@ -422,5 +422,24 @@ TEST(multi_vector, named_elements)
 	EXPECT_EQ(42.0_R, mv[0]);
 	EXPECT_EQ(84.0_R, mv[6]);
 }
+
+TEST(multi_vector, get)
+{
+	TestMultiVector mv({{1.0, 2.0, 3.0, 4.0, 5.0, 6.0}}, {{7.0, 8.0, 9.0}});
+
+	TestVector v1 = mv.get<0>();
+	TestVector2 v2 = mv.get<1>();
+
+	EXPECT_EQ(1.0_R, v1[0]);
+	EXPECT_EQ(2.0_R, v1[1]);
+	EXPECT_EQ(3.0_R, v1[2]);
+	EXPECT_EQ(4.0_R, v1[3]);
+	EXPECT_EQ(5.0_R, v1[4]);
+	EXPECT_EQ(6.0_R, v1[5]);
+
+	EXPECT_EQ(7.0_R, v2[0]);
+	EXPECT_EQ(8.0_R, v2[1]);
+	EXPECT_EQ(9.0_R, v2[2]);
+}
 }
 
