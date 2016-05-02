@@ -36,6 +36,7 @@
 #include <cstdlib>
 #include <initializer_list>
 #include <iostream>
+#include <string>
 #include <type_traits>
 
 #include <cinder/common/array_utils.hpp>
@@ -91,6 +92,24 @@ struct VectorElementInfo {
 	                            double scale = 1e0)
 	    : name(name), unit(unit), scale(scale)
 	{
+	}
+
+	/**
+	 * Equals operator. Mainly used for unit testing.
+	 */
+	bool operator==(const VectorElementInfo &o) const
+	{
+		return std::string(name) == std::string(o.name) &&
+		       std::string(unit) == std::string(o.unit) && scale == o.scale;
+	}
+
+	/**
+	 * Inequality operator. Mainly used for unit testing.
+	 */
+	bool operator!=(const VectorElementInfo &o) const
+	{
+		return std::string(name) != std::string(o.name) ||
+		       std::string(unit) != std::string(o.unit) || scale != o.scale;
 	}
 };
 
@@ -481,6 +500,16 @@ private:
 	 * returned from the info() method.
 	 */
 	template <size_t... Is>
+	static constexpr std::array<VectorElementInfo, Size> infos(seq<Is...>)
+	{
+		return {{info<Is>()...}};
+	}
+
+	/**
+	 * Used internally to construct an array of names from the information
+	 * returned from the info() method.
+	 */
+	template <size_t... Is>
 	static constexpr std::array<const char *, Size> names(seq<Is...>)
 	{
 		return {{info<Is>().name...}};
@@ -559,6 +588,17 @@ public:
 	static constexpr VectorElementInfo info()
 	{
 		return Inst::element_info(InfoAccessor<I>());
+	}
+
+	/**
+	 * Returns information about the I-th vector element.
+	 *
+	 * @tparam I is the index of the vector element for which information should
+	 * be returned.
+	 */
+	static constexpr std::array<VectorElementInfo, Size> infos()
+	{
+		return infos(gen_seq<Size>());
 	}
 
 	/**

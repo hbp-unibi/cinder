@@ -359,10 +359,14 @@ TEST(vector, named_elements)
 	std::array<const char *, 6> expected_names = {"a", "u", "i", "c", "g", "t"};
 	std::array<const char *, 6> expected_units = {"", "V", "A", "F", "S", "s"};
 	TestVector expected_scales = {{1e0, 1e3, 1e9, 1e9, 1e6, 1e3}};
+	std::array<VectorElementInfo, 6> expected_infos = {{
+	    {"a", "", 1e0},  {"u", "V", 1e3}, {"i", "A", 1e9},
+	    {"c", "F", 1e9}, {"g", "S", 1e6}, {"t", "s", 1e3}}};
 
 	EXPECT_EQ(expected_names, TestVector::names());
 	EXPECT_EQ(expected_units, TestVector::units());
 	EXPECT_EQ(expected_scales, TestVector::scales());
+	EXPECT_EQ(expected_infos, TestVector::infos());
 }
 
 TEST(multi_vector, named_elements)
@@ -403,10 +407,15 @@ TEST(multi_vector, named_elements)
 	                                              "s", "",  "V", "A"};
 	TestMultiVector expected_scales = {
 	    {1e0, 1e3, 1e9, 1e9, 1e6, 1e3, 1e0, 1e3, 1e9}};
+	std::array<VectorElementInfo, 9> expected_infos = {{
+	    {"a", "", 1e0},  {"u", "V", 1e3}, {"i", "A", 1e9},
+	    {"c", "F", 1e9}, {"g", "S", 1e6}, {"t", "s", 1e3},
+	    {"b", "", 1e0},  {"c", "V", 1e3}, {"d", "A", 1e9}}};
 
 	EXPECT_EQ(expected_names, TestMultiVector::names());
 	EXPECT_EQ(expected_units, TestMultiVector::units());
 	EXPECT_EQ(expected_scales, TestMultiVector::scales());
+	EXPECT_EQ(expected_infos, TestMultiVector::infos());
 
 	TestMultiVector mv;
 
