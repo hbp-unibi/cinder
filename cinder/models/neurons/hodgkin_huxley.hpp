@@ -103,13 +103,6 @@ struct HodgkinHuxleyParameters
 		e_rev_leak(v);
 		return *this;
 	}
-
-	/**
-	 * Returns the explicit refractory period -- the HodgkinHuxley model does
-	 * not possess an explicit refractory period, so zero is returnex. Used by
-	 * the SpikingMembraneBase class.
-	 */
-	static constexpr RealTime tau_refrac() { return RealTime(); }
 };
 
 /**
