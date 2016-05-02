@@ -99,12 +99,15 @@ public:
 	template <typename State, typename System>
 	ControllerResult control(Time, const State &s, const System &sys)
 	{
-		static constexpr Real MAX_DV = 1e-3;        // 1 mV/s
+		static constexpr Real MAX_DV_REL = 1e-3;    // 1 mV / (s * V)
+		static constexpr Real MAX_DV = 1e-3;        // 1 mV / s
 		static constexpr Real MAX_DELTA_I = 1e-13;  // 1 pA
 
 		// Abort if there are no more input spikes, the neuron membrane voltage
-		// is near the resting potential and the current is near zero.
-		if (std::abs(sys.ode().df(s, sys)[0]) < MAX_DV &&
+		// does not change that much (relative to its current value) and the
+		// current is near zero.
+		if (std::abs(sys.ode().df(s, sys)[0]) <
+		        (MAX_DV + std::abs(s[0] * MAX_DV_REL)) &&
 		    std::abs(sys.ode().current(s, sys) - m_offs) < MAX_DELTA_I) {
 			return ControllerResult::MAY_CONTINUE;
 		}
@@ -158,7 +161,8 @@ class MultiController
 };
 
 /**
- * Class used to cascade a number of Controllers. Use the make_multi_controller()
+ * Class used to cascade a number of Controllers. Use the
+ * make_multi_controller()
  * method to conveniently construct a Controller consisting of multiple
  * controllers.
  */
