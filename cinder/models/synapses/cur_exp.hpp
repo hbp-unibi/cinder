@@ -33,7 +33,8 @@
 
 namespace cinder {
 /**
- * State vector used by the CurExp synape type.
+ * State vector used by the CurExp synape type, stores the current induced by
+ * the synapse in the first state variable.
  */
 struct CurExpState : public VectorBase<CurExpState, Real, 1> {
 	using VectorBase<CurExpState, Real, 1>::VectorBase;
@@ -42,29 +43,69 @@ struct CurExpState : public VectorBase<CurExpState, Real, 1> {
 };
 
 /**
+ * Parameter vector used for the CurExp synapse. A CurExp synapse posseses
+ * two parameters. The synaptic weight w_syn() determines by how much the
+ * current induced by the synapse is increased whenever an external spike
+ * arrives. The parameter tau_syn() is time constant of the exponential decay.
+ */
+struct CurExpParameters : public VectorBase<CurExpParameters, Real, 2> {
+	using VectorBase<CurExpParameters, Real, 2>::VectorBase;
+
+	CurExpParameters()
+	{
+		w_syn(0.1_nA);
+		tau_syn(5_ms);
+	}
+
+	TYPED_VECTOR_ELEMENT(w_syn, 0, Current);
+	TYPED_VECTOR_ELEMENT(tau_syn, 1, RealTime);
+};
+
+/**
  * Current based synapse with exponential decay.
  */
-struct CurExp : public SynapseBase<CurExp, CurExpState> {
-private:
-	friend SynapseBase<CurExp, CurExpState>;
+struct CurExp
+    : public CurrentBasedSynapseBase<CurExp, CurExpState, CurExpParameters> {
+	using Base = CurrentBasedSynapseBase<CurExp, CurExpState, CurExpParameters>;
+	using Base::Base;
+	using Base::p;
 
-	Current m_w;
+	friend SynapseBase<CurExp, CurExpState, CurExpParameters>;
+
+private:
 	Real m_tau_inv;
 
 	template <typename State2, typename System>
 	void process_spike(const Spike &spike, Time, State2 &s, System &) const
 	{
-		// Increase the channel current
-		s[0] += m_w * spike.w;
+		s[0] += p().w_syn() * spike.w;
 	}
 
 public:
-	CurExp(Current w, Time tau,
+	/**
+	 * Constructor of the CurExp synapse, allowing to directly set the synapse
+	 * parameters.
+	 *
+	 * @param w_syn is the synaptic weight, determining by how much the
+	 * current is increased whenever an external spike is received.
+	 * @param tau_syn is the synaptic time constant, determining the slope of
+	 * the exponential decay.
+	 * @param input_spikes is a list containing the input spike trains.
+	 */
+	CurExp(Current w_syn, RealTime tau_syn,
 	       const std::vector<Spike> &input_spikes = std::vector<Spike>())
-	    : SynapseBase<CurExp, CurExpState>(input_spikes),
-	      m_w(w),
-	      m_tau_inv(1.0_R / tau.sec())
+	    : Base({{w_syn, tau_syn}}, input_spikes)
 	{
+	}
+
+	/**
+	 * Calculates the inverse of the tau_syn parameter to speed up the
+	 * time-critical calls to df().
+	 */
+	template <typename State2, typename System>
+	void init(Time, const State2 &, const System &)
+	{
+		m_tau_inv = 1.0_R / p().tau_syn();
 	}
 
 	template <typename State2, typename System>
@@ -77,3 +118,4 @@ public:
 }
 
 #endif /* CINDER_MODELS_SYNAPSES_CUR_EXP_HPP */
+

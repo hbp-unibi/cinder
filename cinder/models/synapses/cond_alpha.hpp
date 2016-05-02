@@ -60,46 +60,101 @@ struct CondAlphaState : public VectorBase<CondAlphaState, Real, 2> {
 };
 
 /**
+ * Parameter vector used for the CondAlpha synapse. A CondAlpha synapse posseses
+ * three parameters. The synaptic weight w_syn() determines the peak
+ * conductivity of the synapse when an external spike arrives. The time constant
+ * tau_syn() controls how long the synapse takes to reach its maximum
+ * conductivity and the slope of the decay. The e_rev_syn() parameter controls
+ * the reversal potential of the ion channel controlled by the synapse.
+ */
+struct CondAlphaParameters : public VectorBase<CondAlphaParameters, Real, 3> {
+	using VectorBase<CondAlphaParameters, Real, 3>::VectorBase;
+
+	/**
+	 * Default constructor of the CondAlphaParameters class. Sets the synaptic
+	 * weight to 0.1uS, the synaptic time constant to 5ms and the reversal
+	 * potential to 0V.
+	 */
+	CondAlphaParameters()
+	{
+		w_syn(0.1_uS);
+		tau_syn(5_ms);
+		e_rev_syn(0_mV);
+	}
+
+	TYPED_VECTOR_ELEMENT(w_syn, 0, Conductance);
+	TYPED_VECTOR_ELEMENT(tau_syn, 1, RealTime);
+	TYPED_VECTOR_ELEMENT(e_rev_syn, 2, Voltage);
+};
+
+/**
  * Alpha-function shaped conductance-based synapse.
  */
-struct CondAlpha : public SynapseBase<CondAlpha, CondAlphaState> {
-private:
-	friend SynapseBase<CondAlpha, CondAlphaState>;
+struct CondAlpha : public ConductanceBasedSynapseBase<CondAlpha, CondAlphaState,
+                                                      CondAlphaParameters> {
+	using Base = ConductanceBasedSynapseBase<CondAlpha, CondAlphaState,
+	                                         CondAlphaParameters>;
+	using Base::Base;
+	using Base::p;
 
-	Real m_w;
+	friend SynapseBase<CondAlpha, CondAlphaState,
+	                                   CondAlphaParameters>;
+
+private:
 	Real m_tau_inv;
-	Voltage m_e_rev;
 
 	template <typename State2, typename System>
 	void process_spike(const Spike &spike, Time, State2 &s, System &) const
 	{
-		s[1] += m_w * spike.w;
+		s[1] += p().w_syn() * spike.w * 2.718281828_R;
 	}
 
 public:
-	CondAlpha(Conductance w, Time tau, Voltage e_rev,
+	/**
+	 * Constructor allowing to directly set all three synapse parameters.
+	 *
+	 * @param w_syn is the peak conductivity that is reached when the synapse
+	 * receives a single input spike.
+	 * @param tau_syn is the synaptic time constant, determining the slope of
+	 * the conductivity rise and fall and the relative position of the maximum
+	 * conductivity.
+	 * @param e_rev_syn is the reversal potential of the channels controlled
+	 * be the synapse, determining the potential to which the membrane is pulled
+	 * whenever the synapse receives input spikes.
+	 * @param input_spikes is a list containing the input spike trains.
+	 */
+	CondAlpha(Conductance w_syn, RealTime tau_syn, Voltage e_rev_syn,
 	          const std::vector<Spike> &input_spikes = std::vector<Spike>())
-	    : SynapseBase<CondAlpha, CondAlphaState>(input_spikes),
-	      m_w(w.v() * 2.718281828_R),
-	      m_tau_inv(1.0_R / tau.sec()),
-	      m_e_rev(e_rev)
+	    : Base({{w_syn, tau_syn, e_rev_syn}}, input_spikes)
 	{
 	}
 
+	/**
+	 * Calculates the inverse of the tau_syn parameter to speed up the
+	 * time-critical calls to df().
+	 */
+	template <typename State2, typename System>
+	void init(Time, const State2 &, const System &)
+	{
+		m_tau_inv = 1.0_R / p().tau_syn();
+	}
+
+	/**
+	 * The df() method describes the dynamics of the CondAlpha synapse,
+	 * implementing a low-pass filtered version of the second state component
+	 * for the first state component and an exponential decay of the second
+	 * state component:
+	 *
+	 *      d/dt b(t) = - b(t) / tau
+	 *      d/dt a(t) = (a(t) - b(t)) / tau
+	 */
 	template <typename State2, typename System>
 	State df(const State2 &s, const System &) const
 	{
 		return State({(s[1] - s[0]) * m_tau_inv, -s[1] * m_tau_inv});
 	}
-
-	template <typename State, typename System>
-	Current current(const State &s, const System &sys) const
-	{
-		// Calculate the current depending on the channel conductance and the
-		// current voltage
-		return Current(s[0] * (m_e_rev - sys.ode().voltage(sys.s(), sys)).v());
-	}
 };
 }
 
 #endif /* CINDER_MODELS_SYNAPSES_COND_ALPHA_HPP */
+

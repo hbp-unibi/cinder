@@ -17,14 +17,10 @@
  */
 
 /**
- * @file current_source.hpp
+ * @file synapse.hpp
  *
- * Implementation of some basic current sources. Furthermore implements the
- * MultiCurrentSource object which allows to combine an arbitrary number of
- * current sources into a single current source.
- *
- * A current source in itself is an ODE object which can be integrated using
- * the Solver class.
+ * Contains the base class of all synapses, SynapseBase. A synapse is a current
+ * source modulated by a set of input spikes.
  *
  * @author Andreas Stöckel
  */
@@ -42,23 +38,55 @@
 namespace cinder {
 /**
  * Base class from which synapse implementations should derive. Implements the
- * handling
+ * handling of input spikes.
+ *
+ * @tparam Impl_ is the top-level class which actually implements the synaptic
+ * dynamics and possesses a process_spike() method, which is called whenever an
+ * input spike is received.
+ * @tparam State_ is a vector type describing the current synapse state in its
+ * corresponding differential equation.
+ * @tparam Parameters_ is a vector type holding the user settable synaptic
+ * parameters.
  */
-template <typename Impl, typename State_>
-struct SynapseBase : public CurrentSourceBase<State_> {
+template <typename Impl_, typename State_, typename Parameters_>
+struct SynapseBase : public CurrentSourceBase<State_, Parameters_> {
 private:
+	/**
+	 * Priority queue holding the input spikes, with the earliest spikes being
+	 * at the beginnign of the queue.
+	 */
 	std::priority_queue<Spike, std::vector<Spike>, std::greater<Spike>>
 	    m_input_spikes;
 
-	Impl &impl() { return static_cast<Impl &>(*this); }
-
 public:
-	SynapseBase(const std::vector<Spike> &input_spikes = std::vector<Spike>())
-	    : m_input_spikes(input_spikes.begin(), input_spikes.end())
+	using Base = CurrentSourceBase<State_, Parameters_>;
+
+	using Parameters = Parameters_;
+	using State = State_;
+
+	/**
+	 * Constructor of the SynapseBase class, copies the given parameters and
+	 * input spikes into internal buffers.
+	 *
+	 * @param params is an instance of the Parameters vector from which the
+	 * user-defined synaptic parameters are read.
+	 * @param input_spikes is a list containing the input spikes. The spikes are
+	 * automatically sorted into a priority queue and may be unsorted.
+	 */
+	SynapseBase(const Parameters &params = Parameters(),
+	            const std::vector<Spike> &input_spikes = std::vector<Spike>())
+	    : Base(params), m_input_spikes(input_spikes.begin(), input_spikes.end())
 	{
 	}
 
+	/**
+	 * Returns a reference at the priority queue holding the input spikes.
+	 */
 	auto &input_spikes() { return m_input_spikes; }
+
+	/**
+	 * Returns a const-reference at the priority queue holding the input spikes.
+	 */
 	const auto &input_spikes() const { return m_input_spikes; }
 
 	/**
@@ -74,15 +102,60 @@ public:
 	 * Called whenever the discontinuity is reached. Relays the call to the
 	 * child process_spike() method.
 	 */
-	template <typename State, typename System>
-	void handle_discontinuity(Time t, State &s, System &sys)
+	template <typename State2, typename System>
+	void handle_discontinuity(Time t, State2 &s, System &sys)
 	{
 		while (!m_input_spikes.empty() && m_input_spikes.top().t <= t) {
-			impl().process_spike(m_input_spikes.top(), t, s, sys);
+			static_cast<Impl_ &>(*this)
+			    .process_spike(m_input_spikes.top(), t, s, sys);
 			m_input_spikes.pop();
 		}
 	}
 };
+
+/**
+ * Base class for conductance based synapses. Contains a current function which
+ * converts the conductance stored in the first state component into a current
+ * based on the current membrane potential.
+ */
+template <typename Impl_, typename State_, typename Parameters_>
+struct ConductanceBasedSynapseBase
+    : public SynapseBase<Impl_, State_, Parameters_> {
+	using Base = SynapseBase<Impl_, State_, Parameters_>;
+	using Base::Base;
+	using Base::p;
+
+	using Parameters = Parameters_;
+	using State = State_;
+
+	/**
+	 * Converts the conductance stored in the first state component into a
+	 * current depending on the current membrane potential and the e_rev_syn()
+	 * parameter.
+	 */
+	template <typename State2, typename System>
+	Current current(const State2 &s, const System &sys) const
+	{
+		// Calculate the current depending on the channel conductance and the
+		// current voltage
+		return Current(s[0] *
+		               (p().e_rev_syn() - sys.ode().voltage(sys.s(), sys)).v());
+	}
+};
+
+/**
+ * Base class for current based synapses. Assumes that the current is stored
+ * in the first state component (as is the default for all classes derived from
+ * CurrentSourceBase). This class does nothing special, but is provided for
+ * symmetry reasons along with ConducdanceBasedSynapseBase.
+ */
+template <typename Impl_, typename State_, typename Parameters_>
+struct CurrentBasedSynapseBase
+    : public SynapseBase<Impl_, State_, Parameters_> {
+	using Base = SynapseBase<Impl_, State_, Parameters_>;
+	using Base::Base;
+};
 }
 
 #endif /* CINDER_MODELS_SYNAPSE_HPP */
+

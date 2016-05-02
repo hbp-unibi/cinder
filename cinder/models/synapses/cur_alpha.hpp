@@ -60,30 +60,86 @@ struct CurAlphaState : public VectorBase<CurAlphaState, Real, 2> {
 };
 
 /**
+ * Parameter vector used for the CurAlpha synapse. A CurAlpha synapse posseses
+ * two parameters. The synaptic weight w_syn() determines the peak
+ * current of the synapse as a result to an external spike The time constant
+ * tau_syn() controls how long the synapse takes to reach its maximum
+ * conductivity, as well as the slope of the decay.
+ */
+struct CurAlphaParameters : public VectorBase<CurAlphaParameters, Real, 2> {
+	using VectorBase<CurAlphaParameters, Real, 2>::VectorBase;
+
+	/**
+	 * Default constructor of the CurAlphaParameters class. Sets the synaptic
+	 * weight to 0.1nA and the synaptic time constant to 5ms.
+	 */
+	CurAlphaParameters()
+	{
+		w_syn(0.1_nA);
+		tau_syn(5_ms);
+	}
+
+	TYPED_VECTOR_ELEMENT(w_syn, 0, Current);
+	TYPED_VECTOR_ELEMENT(tau_syn, 1, RealTime);
+};
+
+/**
  * Alpha-function shaped current-based synapse.
  */
-struct CurAlpha : public SynapseBase<CurAlpha, CurAlphaState> {
-private:
-	friend SynapseBase<CurAlpha, CurAlphaState>;
+struct CurAlpha : public CurrentBasedSynapseBase<CurAlpha, CurAlphaState,
+                                                 CurAlphaParameters> {
+	using Base = CurrentBasedSynapseBase<CurAlpha, CurAlphaState,
+	                                         CurAlphaParameters>;
+	using Base::Base;
+	using Base::p;
 
-	Real m_w;
+	friend SynapseBase<CurAlpha, CurAlphaState, CurAlphaParameters>;
+
+private:
 	Real m_tau_inv;
 
 	template <typename State2, typename System>
 	void process_spike(const Spike &spike, Time, State2 &s, System &) const
 	{
-		s[1] += m_w * spike.w;
+		s[1] += p().w_syn() * spike.w * 2.718281828_R;
 	}
 
 public:
-	CurAlpha(Current w, Time tau,
+	/**
+	 * Constructor of the CurAlpha synapse, allowing to directly set the synapse
+	 * parameters.
+	 *
+	 * @param w_syn is the synaptic weight, determining the current peak when
+	 * a single external spike arrives.
+	 * @param tau_syn is the time constant, determining the slope of the current
+	 * rise and fall.
+	 * @param input_spikes is a list containing the input spike trains.
+	 */
+	CurAlpha(Current w_syn, RealTime tau_syn,
 	         const std::vector<Spike> &input_spikes = std::vector<Spike>())
-	    : SynapseBase<CurAlpha, CurAlphaState>(input_spikes),
-	      m_w(w.v() * 2.718281828_R),
-	      m_tau_inv(1.0_R / tau.sec())
+	    : Base({{w_syn, tau_syn}}, input_spikes)
 	{
 	}
 
+	/**
+	 * Calculates the inverse of the tau_syn parameter to speed up the
+	 * time-critical calls to df().
+	 */
+	template <typename State2, typename System>
+	void init(Time, const State2 &, const System &)
+	{
+		m_tau_inv = 1.0_R / p().tau_syn();
+	}
+
+	/**
+	 * The df() method describes the dynamics of the CurAlpha synapse,
+	 * implementing a low-pass filtered version of the second state component
+	 * for the first state component and an exponential decay of the second
+	 * state component:
+	 *
+	 *      d/dt b(t) = - b(t) / tau
+	 *      d/dt a(t) = (a(t) - b(t)) / tau
+	 */
 	template <typename State2, typename System>
 	State df(const State2 &s, const System &) const
 	{
@@ -93,3 +149,4 @@ public:
 }
 
 #endif /* CINDER_MODELS_SYNAPSES_CUR_ALPHA_HPP */
+

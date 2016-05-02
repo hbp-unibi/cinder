@@ -33,7 +33,8 @@
 
 namespace cinder {
 /**
- * State vector used for the conductance based neuron.
+ * State vector used for the CondExp synapse. The g_syn() state component holds
+ * the conductivity of the synapse.
  */
 struct CondExpState : public VectorBase<CondExpState, Real, 1> {
 	using VectorBase<CondExpState, Real, 1>::VectorBase;
@@ -42,48 +43,100 @@ struct CondExpState : public VectorBase<CondExpState, Real, 1> {
 };
 
 /**
- * Current based synapse with exponential decay.
+ * Parameter vector used for in the CondExp synapse. A CondExp synapse is
+ * described by three parameters. The synaptic weight w_syn() determines the
+ * the value by which the conductivity of the synapse is increased when an
+ * external spike arrives. The time constant tau_syn() is the time constant
+ * of the exponential decay. The e_rev_syn() parameter controls the reversal
+ * potential of the ion channel controlled by the synapse.
  */
-struct CondExp : public SynapseBase<CondExp, CondExpState> {
+struct CondExpParameters : public VectorBase<CondExpParameters, Real, 3> {
+	using VectorBase<CondExpParameters, Real, 3>::VectorBase;
+
+	/**
+	 * Default constructor of the CondExpParameters class. Sets the synaptic
+	 * weight to 0.1uS, the synaptic time constant to 5ms and the reversal
+	 * potential to 0V.
+	 */
+	CondExpParameters()
+	{
+		w_syn(0.1_uS);
+		tau_syn(5_ms);
+		e_rev_syn(0_mV);
+	}
+
+	TYPED_VECTOR_ELEMENT(w_syn, 0, Conductance);
+	TYPED_VECTOR_ELEMENT(tau_syn, 1, RealTime);
+	TYPED_VECTOR_ELEMENT(e_rev_syn, 2, Voltage);
+};
+
+/**
+ * The CondExp synapse implements a conductivity based synapse with exponential
+ * decay.
+ */
+struct CondExp : public ConductanceBasedSynapseBase<CondExp, CondExpState,
+                                                    CondExpParameters> {
+	using Base =
+	    ConductanceBasedSynapseBase<CondExp, CondExpState, CondExpParameters>;
+	using Base::Base;
+	using Base::p;
+
+	friend SynapseBase<CondExp, CondExpState, CondExpParameters>;
+
 private:
-	friend SynapseBase<CondExp, CondExpState>;
-
-	Conductance m_w;
 	Real m_tau_inv;
-	Voltage m_e_rev;
 
+	/**
+	 * Handles the arival of an input spike -- simply increases the conductivity
+	 * of the synapse by increasing the first state component.
+	 */
 	template <typename State, typename System>
 	void process_spike(const Spike &spike, Time, State &s, System &) const
 	{
-		// Increase the channel conductance
-		s[0] += m_w * spike.w;
+		s[0] += p().w_syn() * spike.w;
 	}
 
 public:
-	CondExp(Conductance w, Time tau, Voltage e_rev,
+	/**
+	 * Constructor of the CondExp synapse, allowing to directly set the synapse
+	 * parameters.
+	 *
+	 * @param w_syn is the synaptic weight, determining by how much the
+	 * conductance is increased whenever an external spike is received.
+	 * @param tau_syn is the synaptic time constant, determining the slope of
+	 * the exponential decay.
+	 * @param e_rev_syn is the reversal potential of the channels controlled
+	 * be the synapse, determining the potential to which the membrane is pulled
+	 * whenever the synapse receives input spikes.
+	 * @param input_spikes is a list containing the input spike trains.
+	 */
+	CondExp(Conductance w_syn, RealTime tau_syn, Voltage e_rev_syn,
 	        const std::vector<Spike> &input_spikes = std::vector<Spike>())
-	    : SynapseBase<CondExp, CondExpState>(input_spikes),
-	      m_w(w),
-	      m_tau_inv(1.0_R / tau.sec()),
-	      m_e_rev(e_rev)
+	    : Base({{w_syn, tau_syn, e_rev_syn}}, input_spikes)
 	{
 	}
 
+	/**
+	 * Calculates the inverse of the tau_syn parameter to speed up the
+	 * time-critical calls to df().
+	 */
+	template <typename State2, typename System>
+	void init(Time, const State2 &, const System &)
+	{
+		m_tau_inv = 1.0_R / p().tau_syn();
+	}
+
+	/**
+	 * Implements the dynamics of the CondExp synapse which are merely an
+	 * exponential decay of the conductivity state component.
+	 */
 	template <typename State2, typename System>
 	State df(const State2 &s, const System &) const
 	{
-		// Exponential decay of the conductance
 		return State({-m_tau_inv * s[0]});
-	}
-
-	template <typename State, typename System>
-	Current current(const State &s, const System &sys) const
-	{
-		// Calculate the current depending on the channel conductance and the
-		// current voltage
-		return Current(s[0] * (m_e_rev - sys.ode().voltage(sys.s(), sys)).v());
 	}
 };
 }
 
 #endif /* CINDER_MODELS_SYNAPSES_COND_EXP_HPP */
+

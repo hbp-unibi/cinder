@@ -41,14 +41,23 @@
 
 namespace cinder {
 /**
- * A current source which injects a zero current into the neuron.
+ * Base class of all current sources. Provides the current() method.
  *
- * @tparam State is the neuron
+ * @tparam State_ is a vector which describes the current state of the current
+ * source.
+ * @tparam Parameters_ is a vector which contains the user-configurable
+ * parameters of the current source.
  */
-template <typename State_>
-struct CurrentSourceBase : public ODEBase<State_> {
+template <typename State_, typename Parameters_ = NullParameters>
+struct CurrentSourceBase : public ODEBase<State_, Parameters_> {
+	using ODEBase<State_, Parameters_>::ODEBase;
+
 	/**
-	 * Retrieves the current from the given state vector.
+	 * Retrieves the current from the given state vector. Per default, the first
+	 * state component is used. Current sources which do not possess any state
+	 * (use the NullState) class must override this method, all other current
+	 * source implementations are advised to place the current in the first
+	 * state component (if possible).
 	 */
 	template <typename State, typename System>
 	static Current current(const State &s, const System &)
@@ -58,25 +67,10 @@ struct CurrentSourceBase : public ODEBase<State_> {
 };
 
 /**
- * State vector used by current sources with no state component.
+ * Current source which injects no current. Can be used as a dummy current
+ * source.
  */
-struct NullState : public VectorBase<NullState, Real, 0> {
-	using VectorBase<NullState, Real, 0>::VectorBase;
-};
-
-/**
- * State vector used by current sources with a single current component.
- */
-struct SingleCurrentState : public VectorBase<SingleCurrentState, Real, 1> {
-	using VectorBase<SingleCurrentState, Real, 1>::VectorBase;
-
-	TYPED_VECTOR_ELEMENT(i, 0, Current);
-};
-
-/**
- * Current source which injects zero current.
- */
-struct NullCurrentSource : public CurrentSourceBase<NullState> {
+struct NullCurrentSource : public CurrentSourceBase<NullState, NullParameters> {
 	/**
 	 * Retrieves the current from the given state vector.
 	 */
@@ -88,38 +82,109 @@ struct NullCurrentSource : public CurrentSourceBase<NullState> {
 };
 
 /**
- * Current source which injects a constant current.
+ * ConstantCurrentSourceParameters contains the parameters describing a constant
+ * current source.
  */
-struct ConstantCurrentSource : public CurrentSourceBase<SingleCurrentState> {
-private:
-	Current m_constant_current;
+struct ConstantCurrentSourceParameters
+    : public VectorBase<ConstantCurrentSourceParameters, Real, 1> {
+	using VectorBase<ConstantCurrentSourceParameters, Real, 1>::VectorBase;
 
-public:
+	TYPED_VECTOR_ELEMENT(i, 0, Current);
+};
+
+/**
+ * Current source which injects a constant current into the neuron membrane.
+ */
+struct ConstantCurrentSource
+    : public CurrentSourceBase<NullState, ConstantCurrentSourceParameters> {
+	using Base = CurrentSourceBase<NullState, ConstantCurrentSourceParameters>;
+	using Base::p;
+	using Base::Base;
+
 	ConstantCurrentSource(Current constant_current = 0.0_A)
-	    : m_constant_current(constant_current)
+	    : Base({{constant_current}})
 	{
 	}
 
-	SingleCurrentState s0() const
+	/**
+	 * Returns the constant current stored in the parameters.
+	 */
+	template <typename State, typename System>
+	Current current(const State &, const System &) const
 	{
-		return SingleCurrentState({m_constant_current});
+		return p().i();
 	}
+};
+
+/**
+ * State vector used by the StepCurrentSource class to describe the current that
+ * is being injected into the neuron. The current i() is the current that is
+ * currently being injected by the current source.
+ */
+struct StepCurrentSourceState
+    : public VectorBase<StepCurrentSourceState, Real, 1> {
+	using VectorBase<StepCurrentSourceState, Real, 1>::VectorBase;
+
+	TYPED_VECTOR_ELEMENT(i, 0, Current);
+};
+
+/**
+ * StepCurrentSourceParameters contains the parameters describing the behaviour
+ * of the StepCurrentSource. There are three parameters: i(), which determines
+ * the current that is being injected into the neuron, t_start() which
+ * determines the time at which the current is first injected, and t_end() which
+ * determines the time at which the current injection stops.
+ */
+struct StepCurrentSourceParameters
+    : public VectorBase<StepCurrentSourceParameters, Real, 3> {
+	using VectorBase<StepCurrentSourceParameters, Real, 3>::VectorBase;
+
+	/**
+	 * Constructor setting the default parameters.
+	 */
+	StepCurrentSourceParameters()
+	{
+		i(1_nA);
+		t_start(0_s);
+		t_end(RealTime(std::numeric_limits<Real>::max()));
+	}
+
+	TYPED_VECTOR_ELEMENT(i, 0, Current);
+	TYPED_VECTOR_ELEMENT(t_start, 1, RealTime);
+	TYPED_VECTOR_ELEMENT(t_end, 2, RealTime);
 };
 
 /**
  * A current source which injects a constant current during a given interval.
  */
-class StepCurrentSource : public CurrentSourceBase<SingleCurrentState> {
+class StepCurrentSource
+    : public CurrentSourceBase<StepCurrentSourceState,
+                               StepCurrentSourceParameters> {
 private:
-	Current m_step_current;
 	Time m_t_start;
 	Time m_t_end;
 
 public:
-	StepCurrentSource(Current m_step_current, Time m_t_start,
-	                  Time m_t_end = MAX_TIME)
-	    : m_step_current(m_step_current), m_t_start(m_t_start), m_t_end(m_t_end)
+	using Base =
+	    CurrentSourceBase<StepCurrentSourceState, StepCurrentSourceParameters>;
+	using Base::p;
+	using Base::Base;
+
+	StepCurrentSource(Current step_current, RealTime t_start,
+	                  RealTime t_end = RealTime(std::numeric_limits<Real>::max()))
+	    : Base({{step_current, t_start, t_end}})
 	{
+	}
+
+	/**
+	 * Converts the floating point times from the parameters to the internal
+	 * fixed point times.
+	 */
+	template <typename State2, typename System>
+	void init(Time, const State2 &, const System &)
+	{
+		m_t_start = Time::sec(p().t_start());
+		m_t_end = Time::sec(p().t_end());
 	}
 
 	/**
@@ -137,7 +202,7 @@ public:
 	template <typename State, typename System>
 	void handle_discontinuity(Time t, State &s, System &)
 	{
-		s[0] = (t >= m_t_start && t < m_t_end) ? m_step_current : 0_A;
+		s[0] = (t >= m_t_start && t < m_t_end) ? p().i() : 0_A;
 	}
 };
 
@@ -148,9 +213,10 @@ public:
  * instance.
  */
 template <typename... T>
-class MultiCurrentSource: public MultiODE<T...> {
+class MultiCurrentSource : public MultiODE<T...> {
 public:
 	using Base = MultiODE<T...>;
+	using Base::Base;
 
 private:
 	/*
@@ -169,15 +235,13 @@ private:
 		using InnerState = typename T0::State;
 		static constexpr size_t InnerSize = InnerState::size();
 
-		return Base::template get<I>()
-		           .current(s.template view<InnerSize, Offs>(), sys) +
+		return Base::template get<I>().current(
+		           s.template view<InnerSize, Offs>(), sys) +
 		       current_impl<State2, System, I + 1, Offs + InnerSize, Ts...>(
 		           s, sys);
 	}
 
 public:
-	using Base::Base;
-
 	/**
 	 * Retrieves the current from the given state vector.
 	 */

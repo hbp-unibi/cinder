@@ -38,14 +38,57 @@
 
 namespace cinder {
 /**
+ * State vector used by ODEs with no state component, i.e. current sources which
+ * inject a constant current into a membrane.
+ */
+struct NullState : public VectorBase<NullState, Real, 0> {
+	using VectorBase<NullState, Real, 0>::VectorBase;
+};
+
+/**
+ * Empty parameter vector. Used by ODEs without any user-definable parameters.
+ */
+struct NullParameters : public VectorBase<NullParameters, Real, 0> {
+	using VectorBase<NullParameters, Real, 0>::VectorBase;
+};
+
+/**
  * The ODEBase represents a basic ordinary differential equation with no
  * discontinuities.
  *
  * @tparam State is the state vector underlying the ODE.
  */
-template <typename State_>
-struct ODEBase {
+template <typename State_ = NullState, typename Parameters_ = NullParameters>
+class ODEBase {
+public:
 	using State = State_;
+	using Parameters = Parameters_;
+
+private:
+	/**
+	 * Parameter instance stored within the ODEBase class.
+	 */
+	Parameters m_params;
+
+public:
+	/**
+	 * Default constructor of the ODEBase class. Allows to set the initial
+	 * parameters that should be used for this ODE.
+	 */
+	ODEBase(const Parameters &params = Parameters()) : m_params(params) {}
+
+	/**
+	 * Returns a constant reference at the parameter vector.
+	 */
+	const Parameters &p() const { return m_params; }
+
+	/**
+	 * Updates the parameter vector to contain the given values.
+	 *
+	 * @param params is a parameter vector containing the values that should be
+	 * written to the internal parameter vector copy.
+	 */
+	void p(const Parameters &params) { m_params = params; }
 
 	/**
 	 * Allows the implementations to perform some initialization.
@@ -101,14 +144,43 @@ public:
 	/**
 	 * State vector representing the entire system.
 	 */
-	class State : public MultiVector<State, typename T::State...>  {
+	class State : public MultiVector<State, typename T::State...> {
 		using MultiVector<State, typename T::State...>::MultiVector;
+	};
+
+	/**
+	 * Parameter vector representing the entire system.
+	 */
+	class Parameters : public MultiVector<Parameters, typename T::Parameters...> {
+		using MultiVector<Parameters, typename T::Parameters...>::MultiVector;
 	};
 
 protected:
 	std::tuple<T...> instances;
 
 private:
+	template <size_t... Is>
+	Parameters get_params_impl(seq<Is...>) const
+	{
+		return Parameters(get<Is>().p()...);
+	}
+
+	template <size_t I>
+	void set_params_impl(
+	    const Parameters &,
+	    typename std::enable_if<(I >= sizeof...(T))>::type * = 0) const
+	{
+	}
+
+	template <size_t I>
+	void set_params_impl(
+	    const Parameters &params,
+	    typename std::enable_if<(I < sizeof...(T))>::type * = 0) const
+	{
+		get<I>().params(params.template get<I>());
+		set_params_impl<I + 1>(params);
+	}
+
 	/*
 	 * Compile-time recursive implementation of init.
 	 */
@@ -236,6 +308,19 @@ private:
 
 public:
 	MultiODE(const T &... args) : instances(args...) {}
+
+	/**
+	 * Returns a copy of the parameters currently stored in the ODE.
+	 */
+	Parameters p() const
+	{
+		return get_params_impl(gen_seq<sizeof...(T)>());
+	}
+
+	/**
+	 * Sets the parameters to the given values.
+	 */
+	void p(const Parameters &params) { set_params_impl<0>(params); }
 
 	template <typename State2, typename System>
 	void init(Time t, const State2 &s, const System &sys)

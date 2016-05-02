@@ -33,37 +33,58 @@
 
 namespace cinder {
 /**
- * Synapse type which increases the membrane potential by a fixed value.
+ * Parameters of a Delta synapse. Determines by how much the membrane potential
+ * is increased/decreased whenever an input spike is received.
  */
-struct Delta : public SynapseBase<Delta, NullState> {
+struct DeltaParameters : public VectorBase<DeltaParameters, Real, 1> {
+	using VectorBase<DeltaParameters, Real, 1>::VectorBase;
+
+	TYPED_VECTOR_ELEMENT(w_syn, 0, Voltage);
+};
+
+/**
+ * Synapse type which increases the membrane potential by a fixed value, which
+ * corresponds to the Dirac-Delta shaped current pulse (hence the name of the
+ * synapse).
+ */
+struct Delta : public SynapseBase<Delta, NullState, DeltaParameters> {
+	using Base = SynapseBase<Delta, NullState, DeltaParameters>;
+	using Base::Base;
+	using Base::p;
+
+	friend SynapseBase<Delta, NullState, DeltaParameters>;
+
 private:
-	friend SynapseBase<Delta, NullState>;
-
-	Voltage m_pulse_v;
-
 	template <typename State, typename System>
 	void process_spike(const Spike &spike, Time, State &, System &sys) const
 	{
 		// The first system state is supposed to be the membrane voltage
-		sys.s()[0] += m_pulse_v * spike.w;
+		sys.s()[0] += p().w_syn() * spike.w;
 	}
 
 public:
-	Delta(Voltage pulse_v,
+	/**
+	 * Constructor of the Delta synapse, allowing to directly set the synapse
+	 * parameters.
+	 *
+	 * @param w_syn is the synaptic weight, determining the voltage by which
+	 * the membrane potential is increased/decreased whenever a spike arrives
+	 * at the synapse.
+	 * @param input_spikes is a list containing the input spike trains.
+	 */
+	Delta(Voltage w_syn,
 	        const std::vector<Spike> &input_spikes = std::vector<Spike>())
-	    : SynapseBase<Delta, NullState>(input_spikes),
-	      m_pulse_v(pulse_v)
+	    : Base({{w_syn}}, input_spikes)
 	{
 	}
 
+	/**
+	 * As the Delta synapse does not induce a current (appart from a dirac-delta
+	 * shaped current, which is not modelled here) and does not possess a state
+	 * vector, the "current" method is overriden to simply return zero.
+	 */
 	template <typename State2, typename System>
-	State df(const State2 &, const System &) const
-	{
-		return NullState();
-	}
-
-	template <typename State, typename System>
-	Current current(const State &, const System &) const
+	static Current current(const State2 &, const System &)
 	{
 		return Current();
 	}
@@ -71,3 +92,4 @@ public:
 }
 
 #endif /* CINDER_MODELS_SYNAPSES_DELTA_HPP */
+

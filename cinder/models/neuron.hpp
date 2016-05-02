@@ -41,26 +41,32 @@ namespace cinder {
  * Implementation of a basic parameterised neuron membrane.
  */
 template <typename State_, typename Parameters_>
-class MembraneBase : public ODEBase<State_> {
+class MembraneBase : public ODEBase<State_, Parameters_> {
 public:
-	using Parameters = Parameters_;
+	using Base = ODEBase<State_, Parameters_>;
+	using Base::p;
+
 	using SpikeCallback = std::function<void(Time t)>;
+	using Parameters = Parameters_;
 
 private:
-	Parameters m_params;
-
+	/**
+	 * Variable storing the callback function called by emit_spike.
+	 */
 	SpikeCallback m_spike_callback;
 
 protected:
 	/**
 	 * Member function to be called whenever the neuron implementation emits a
 	 * spike.
+	 *
+	 * @param t is the time at which the spike occured.
 	 */
 	void emit_spike(Time t) { m_spike_callback(t); }
 
 public:
 	MembraneBase(const Parameters &params, const SpikeCallback &spike_callback)
-	    : m_params(params), m_spike_callback(spike_callback)
+	    : Base(params), m_spike_callback(spike_callback)
 	{
 	}
 
@@ -69,16 +75,6 @@ public:
 	 * resting potential.
 	 */
 	State_ s0() const { return State_().v(p().v_rest()); }
-
-	/**
-	 * Returns a writable reference at the parameter vector.
-	 */
-	Parameters &p() { return m_params; }
-
-	/**
-	 * Returns a constant reference at the parameter vector.
-	 */
-	const Parameters &p() const { return m_params; }
 
 	/**
 	 * Retrieves the membrane potential from the current state vector.
