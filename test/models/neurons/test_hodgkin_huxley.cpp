@@ -63,4 +63,22 @@ TEST(hodgkin_huxley, cond_exp)
 		EXPECT_GT(0.5_ms, std::abs(expected_spikes[i] - spikes[i]));
 	}
 }
+
+TEST(hodgkin_huxley, numerics)
+{
+	const Current i = -50_uA;
+	DormandPrinceIntegrator integrator(1e-3);
+	NullRecorder recorder;
+	NeuronController controller(i);
+
+	auto current_source = make_current_source(ConstantCurrentSource(i));
+
+	size_t spike_count = 0;
+	auto neuron = make_neuron<HodgkinHuxley>(
+	    current_source, [&spike_count](Time) { spike_count++; });
+
+	make_solver(neuron, integrator, recorder, controller).solve();
+
+	EXPECT_EQ(0U, spike_count);
+}
 }

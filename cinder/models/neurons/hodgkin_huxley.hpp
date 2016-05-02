@@ -32,6 +32,7 @@
 
 #include <cmath>
 
+#include <cinder/common/fast_math.hpp>
 #include <cinder/models/neuron.hpp>
 
 namespace cinder {
@@ -139,6 +140,7 @@ private:
 	static Real pow2(Real x) { return x * x; }
 	static Real pow3(Real x) { return pow2(x) * x; }
 	static Real pow4(Real x) { return pow2(pow2(x)); }
+	static Real clamp_unit(Real x) { return std::min(1_R, std::max(0_R, x));}
 
 public:
 	using Base::Base;
@@ -164,26 +166,31 @@ public:
 	template <typename State, typename System>
 	HodgkinHuxleyState df(const State &s, const System &sys) const
 	{
-		const Real n = s[HodgkinHuxleyState::idx_n];
-		const Real m = s[HodgkinHuxleyState::idx_m];
-		const Real h = s[HodgkinHuxleyState::idx_h];
+		// Read the channel state variables n, m, h, make sure they are clamped
+		// to a value between zero and one.
+		const Real n = clamp_unit(s[HodgkinHuxleyState::idx_n]);
+		const Real m = clamp_unit(s[HodgkinHuxleyState::idx_m]);
+		const Real h = clamp_unit(s[HodgkinHuxleyState::idx_h]);
+		const Real n4 = pow4(n);
+		const Real m3 = pow3(m);
 
-		const Real n4 = pow4(s[HodgkinHuxleyState::idx_n]);
-		const Real m3 = pow3(s[HodgkinHuxleyState::idx_m]);
-
+		// Calculate the currents and the corresponding membrane potential
+		// change rate
 		const Real i_Na = m3 * h * p().gbar_Na() * (s[0] - p().e_rev_Na());
 		const Real i_K = n4 * p().gbar_K() * (s[0] - p().e_rev_K());
 		const Real i_l = p().g_leak() * (s[0] - p().e_rev_leak());
 		const Real i_syn = sys.ode().current(s, sys);
 		const Real dtV = (i_syn - (i_Na + i_K + i_l)) / p().cm();
 
+		// Calculate the channel state variable change rate
 		const Real v = (s[0] - p().v_offset()) * 1e3_R;  // Convert V to mV
 		const EvaluatedChannelDynamics x(v);
 		const Real dtN = (x.alpha_n - (x.alpha_n + x.beta_n) * n) * 1e3_R;
 		const Real dtM = (x.alpha_m - (x.alpha_m + x.beta_m) * m) * 1e3_R;
 		const Real dtH = (x.alpha_h - (x.alpha_h + x.beta_h) * h) * 1e3_R;
 
-		return HodgkinHuxleyState({dtV, dtN, dtM, dtH});
+		HodgkinHuxleyState res = {{dtV, dtN, dtM, dtH}};
+		return res;
 	}
 
 	template <typename State, typename System>
@@ -215,58 +222,97 @@ public:
  */
 class TraubChannelDynamics {
 private:
-	static Real limit_denom(Real x)
+	/**
+	 * Evaluates the function
+	 *     x / (exp(x / a) - 1)
+	 * in a numerically safe way, using a Taylor expansion near the pole at
+	 * x = 0.
+	 */
+	static Real x_div_exp_x_div_a_m_1(Real x, Real a)
 	{
-		static constexpr Real MIN_DENOM = 1e-6;
-		if (std::abs(x) < MIN_DENOM) {
-			if (x < 0) {
-				return -MIN_DENOM;
-			}
-			else {
-				return MIN_DENOM;
-			}
+		constexpr Real MAX_EXP = 16.0_R;
+		constexpr Real c1 = 0.5_R; // 1/2
+		constexpr Real c2 = 0.08333333333_R; // 1/12
+		constexpr Real c3 = 0.001388888889_R; // 1/720
+
+		// For large values, just return zero
+		if (x > MAX_EXP * a) {
+			return 0.0_R;
 		}
-		return x;
+
+		// The Taylor expansion is only usable in the interval [-a, a]
+		if (std::abs(x) > a) {
+			return x / (fast::exp(x / a) - 1.0_R);
+		}
+
+		// Sixth-order Taylor expansion of x / (e^(x/a) - 1)
+		//     1        1   x^2     1   x^4
+		// a - - * x + -- * --- - --- * ---
+		//     2       12   a     720   a^3
+
+		const Real xa = x / a;
+		const Real xa2 = xa * xa;
+
+		return a - (c1 - (c2 - c3 * xa2) * xa) * x;
 	}
 
-	static Real limit(Real x)
+	/**
+	 * Evaluates the function
+	 *     exp(x)
+	 * in a numerically save way, preventing overflows.
+	 */
+	static Real exp_x(Real x)
 	{
-		static constexpr Real MAX_RES = 1e3;
-		return std::min(MAX_RES, std::max(-MAX_RES, x));
+		constexpr Real MAX_EXP = 16.0_R;
+		return fast::exp(std::min(MAX_EXP, x));
+	}
+
+	/**
+	 * Evaluates the function
+	 *    1 / (exp(x / a) + 1)
+	 * in a numerically save way, preventing overflow.
+	 */
+	static Real div_exp_x_div_a_p_1(Real x, Real a)
+	{
+		constexpr Real MAX_EXP = 16.0_R;
+
+		// For large values, just return zero
+		if (x > MAX_EXP * a) {
+			return 0.0_R;
+		}
+
+		return 1._R / (fast::exp(x/a) + 1._R);
 	}
 
 public:
 	static Real alpha_n(Real V)
 	{
-		return limit(0.032_R * (15.0_R - V) /
-		             limit_denom(std::exp((15._R - V) / 5._R) - 1._R));
+		return 0.032_R * x_div_exp_x_div_a_m_1(15._R - V, 5._R);
 	}
 
 	static Real beta_n(Real V)
 	{
-		return limit(0.5_R * std::exp((10._R - V) / 40._R));
+		return 0.5_R * exp_x((10._R - V) / 40._R);
 	}
 
 	static Real alpha_m(Real V)
 	{
-		return limit(0.32_R * (13._R - V) /
-		             limit_denom((std::exp((13._R - V) / 4._R) - 1._R)));
+		return 0.32_R * x_div_exp_x_div_a_m_1(13._R - V, 4._R);
 	}
 
 	static Real beta_m(Real V)
 	{
-		return limit(0.28_R * (V - 40._R) /
-		             limit_denom((std::exp((V - 40._R) / 5._R) - 1._R)));
+		return 0.28_R * x_div_exp_x_div_a_m_1(V - 40._R, 5._R);
 	}
 
 	static Real alpha_h(Real V)
 	{
-		return limit(0.128_R * std::exp((17._R - V) / 18._R));
+		return 0.128_R * exp_x((17._R - V) / 18._R);
 	}
 
 	static Real beta_h(Real V)
 	{
-		return limit(4._R / limit_denom((1._R + std::exp((40._R - V) / 5._R))));
+		return 4._R * div_exp_x_div_a_p_1(40._R - V, 5._R);
 	}
 };
 
