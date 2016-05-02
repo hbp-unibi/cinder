@@ -41,6 +41,9 @@ elseif(("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU") OR
 	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 		# Clang Bug 21629 https://llvm.org/bugs/show_bug.cgi?id=21629
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-braces")
+		# Disable annoying -Wunused-const-variable warning in conjunction with
+		# the NAMED_VECTOR_ELEMENT/TYPED_VECTOR_ELEMENT macros
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-const-variable")
 	endif ()
 endif()
 
