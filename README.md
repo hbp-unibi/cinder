@@ -83,9 +83,9 @@ int main()
 	// Record the neuron state as CSV to cout
 	CSVRecorder recorder(std::cout);
 
-	// Use the NeuronController class to automatically abort the simulation
+	// Use the AutoController class to automatically abort the simulation
 	// once the neuron has settled to its resting state
-	NeuronController controller;
+	AutoController controller;
 
 	// Assemble current source (here: two synapses)
 	auto current_source = make_current_source(

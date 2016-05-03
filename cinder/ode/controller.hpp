@@ -31,9 +31,11 @@
 #define CINDER_ODE_CONTROLLER_HPP
 
 #include <tuple>
+#include <vector>
 
 #include <cinder/common/time.hpp>
 #include <cinder/common/types.hpp>
+#include <cinder/common/vector.hpp>
 
 namespace cinder {
 /**
@@ -80,38 +82,54 @@ struct NullController : public ConstantController<ControllerResult::CONTINUE> {
 };
 
 /**
- * Controller type which runs the simulation until the neuron potential no
- * longer changes and no current flows.
+ * Controller type which runs the simulation until the system of differntial
+ * equations has converged to a resting state.
  */
-class NeuronController {
+class AutoController {
 private:
-	Current m_offs;
+	Time m_last_time;
+	std::vector<Real> m_last_state;
 
 public:
 	/**
-	 * Creates a new NeuronController instance. The given offset current can
-	 * be used to end the simulation in case a constant current is injected
-	 * into the simulation.
-	 *
-	 * @param offs is the current which is interpreted as "no current flowing".
+	 * Allows premature abortion of the differential equation integration once
+	 * the overall system activity sinks below a certain threshold relative to
+	 * the current value range of the system.
 	 */
-	NeuronController(Current offs = 0_A) : m_offs(offs) {}
 	template <typename State, typename System>
-	ControllerResult control(Time, const State &s, const System &sys)
+	ControllerResult control(Time t, const State &s, const System &)
 	{
-		static constexpr Real MAX_DV_REL = 1e-3;    // 1 mV / (s * V)
-		static constexpr Real MAX_DV = 1e-3;        // 1 mV / s
-		static constexpr Real MAX_DELTA_I = 1e-13;  // 1 pA
+		static constexpr Real MAX_ACTIVITY = 1e-3;
+		static constexpr Real MAX_ACTIVITY_REL = 1e-3;
 
-		// Abort if there are no more input spikes, the neuron membrane voltage
-		// does not change that much (relative to its current value) and the
-		// current is near zero.
-		if (std::abs(sys.ode().df(s, sys)[0]) <
-		        (MAX_DV + std::abs(s[0] * MAX_DV_REL)) &&
-		    std::abs(sys.ode().current(s, sys) - m_offs) < MAX_DELTA_I) {
-			return ControllerResult::MAY_CONTINUE;
+		// Calculate the activity of the neuron by numerically calculating the
+		// differential
+		bool tripped = false;
+		if (t - m_last_time > 1_ms) {
+			if (!m_last_state.empty()) {
+				const Time dt = t - m_last_time;
+				const State ds =
+				    (s - VectorView<Real, State::Size>(m_last_state.data())) *
+				    State::scales() / dt.sec();
+				const Real activity = ds.L2Norm();
+
+				// Calculate the current threshold, taking the absolute scale of
+				// the state vector into account
+				const Real threshold =
+				    MAX_ACTIVITY +
+				    (s * State::scales()).L2Norm() * MAX_ACTIVITY_REL;
+
+				tripped = activity < threshold;
+			}
+
+			// Copy the current state and timestamp to the last_state and
+			// last_time variables
+			m_last_state.assign(s.begin(), s.end());
+			m_last_time = t;
 		}
-		return ControllerResult::CONTINUE;  // Go on forever
+
+		return tripped ? ControllerResult::MAY_CONTINUE
+		               : ControllerResult::CONTINUE;
 	}
 };
 
@@ -217,43 +235,38 @@ MultiController<Controllers...> make_multi_controller(Controllers &... cs)
 }
 
 /**
- * The ConditionedNeuronController class is a combination of the
- * "NeuronController" and the "ConditionedController" classes. It allows to
+ * The ConditionedAutoController class is a combination of the
+ * "AutoController" and the "ConditionedController" classes. It allows to
  * simulate a neuron until it has settled or an externally defined condition is
- * reached. Use the make_conditioned_neuron_controller() method to conveniently
- * create an instance of the ConditionedNeuronController.
+ * reached. Use the make_conditioned_auto_controller() method to conveniently
+ * create an instance of the ConditionedAutoController.
  *
  * @tparam F is the
  */
 template <typename F>
-struct ConditionedNeuronController
-    : MultiController<ConditionedController<F>, NeuronController> {
+struct ConditionedAutoController
+    : MultiController<ConditionedController<F>, AutoController> {
 	ConditionedController<F> conditioned_controller;
-	NeuronController neuron_controller;
+	AutoController auto_controller;
 
-	ConditionedNeuronController(F f, Current i_offs = 0_A)
-	    : MultiController<ConditionedController<F>, NeuronController>(
-	          conditioned_controller, neuron_controller),
-	      conditioned_controller(f),
-	      neuron_controller(i_offs)
+	ConditionedAutoController(F f)
+	    : MultiController<ConditionedController<F>, AutoController>(
+	          conditioned_controller, auto_controller),
+	      conditioned_controller(f)
 	{
 	}
 };
 
 /**
- * Returns an instance of the ConditionedNeuronController class, which is a
- * combination of a NeuronController and a ConditionedController.
+ * Returns an instance of the ConditionedAutoController class, which is a
+ * combination of a AutoController and a ConditionedController.
  *
  * @param f is the function describing the abort condition.
- * @param i_offs is the offset current that's being injected into the
- * neuron. Required to tell the NeuronController which current is supposed
- * to be interpreted as "no current flowing".
  */
 template <typename F>
-ConditionedNeuronController<F> make_conditioned_neuron_controller(
-    F f, Current i_offs = 0_A)
+ConditionedAutoController<F> make_conditioned_auto_controller(F f)
 {
-	return ConditionedNeuronController<F>(f, i_offs);
+	return ConditionedAutoController<F>(f);
 }
 }
 

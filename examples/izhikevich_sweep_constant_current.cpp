@@ -45,9 +45,9 @@ int main()
 		// Do not record
 		NullRecorder recorder;
 
-		// Use the NeuronController class to automatically abort the simulation
+		// Use the AutoController class to automatically abort the simulation
 		// once the neuron has settled to its resting state
-		NullController controller;
+		AutoController controller;
 
 		// Assemble the neuron (an Izhikevich neuron with default parameters)
 		size_t spike_count = 0;

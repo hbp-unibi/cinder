@@ -24,8 +24,11 @@
 
 #include <cinder/models/synapses/cur_exp.hpp>
 #include <cinder/models/synapses/cond_exp.hpp>
+#include <cinder/models/synapses/cond_alpha.hpp>
+#include <cinder/models/synapses/delta.hpp>
 #include <cinder/models/neurons/hodgkin_huxley.hpp>
 #include <cinder/integrator/dormand_prince.hpp>
+#include <cinder/integrator/euler.hpp>
 #include <cinder/ode/solver.hpp>
 #include <cinder/ode/recorder.hpp>
 
@@ -44,7 +47,7 @@ TEST(hodgkin_huxley, cond_exp)
 
 	DormandPrinceIntegrator integrator;
 	NullRecorder recorder;
-	NullController controller;
+	AutoController controller;
 	std::vector<Time> spikes;
 
 	// Create an AdEx neuron with a current based synapse
@@ -55,7 +58,7 @@ TEST(hodgkin_huxley, cond_exp)
 	    current_source, [&spikes](Time t) { spikes.push_back(t); });
 
 	// Solve the equation
-	make_solver(neuron, integrator, recorder, controller).solve(1_s);
+	make_solver(neuron, integrator, recorder, controller).solve();
 
 	// Make sure the two results are within the range of one millisecond
 	ASSERT_EQ(expected_spikes.size(), spikes.size());
@@ -64,21 +67,68 @@ TEST(hodgkin_huxley, cond_exp)
 	}
 }
 
-TEST(hodgkin_huxley, numerics)
+TEST(hodgkin_huxley, numerics_negative_current)
 {
-	const Current i = -50_uA;
 	DormandPrinceIntegrator integrator(1e-3);
 	NullRecorder recorder;
-	NeuronController controller(i);
+	AutoController controller;
 
-	auto current_source = make_current_source(ConstantCurrentSource(i));
+	auto current_source = make_current_source(ConstantCurrentSource(-50_uA));
 
 	size_t spike_count = 0;
 	auto neuron = make_neuron<HodgkinHuxley>(
 	    current_source, [&spike_count](Time) { spike_count++; });
 
-	make_solver(neuron, integrator, recorder, controller).solve();
+	auto solver = make_solver(neuron, integrator, recorder, controller);
+	solver.solve();
 
-	EXPECT_EQ(0U, spike_count);
+	// The final potential should be around -5000.06V
+	const Real v_end = solver.s()[0];
+	EXPECT_NEAR(-5000.06_R, v_end, 0.1_R);
+}
+
+TEST(hodgkin_huxley, numerics_positive_current)
+{
+	DormandPrinceIntegrator integrator(1e-3);
+	NullRecorder recorder;
+	AutoController controller;
+
+	auto current_source = make_current_source(
+	    ConstantCurrentSource(0.5_uA),
+	    CondAlpha(0.15_nS, 20_ms, 30_mV, {50_ms, 60_ms, 70_ms}));
+
+	size_t spike_count = 0;
+	auto neuron = make_neuron<HodgkinHuxley>(
+	    current_source, [&spike_count](Time) { spike_count++; });
+
+	auto solver = make_solver(neuron, integrator, recorder, controller);
+	solver.solve();
+
+	// The final potential should be around 0.012V
+	const Real v_end = solver.s()[0];
+	EXPECT_NEAR(0.012_R, v_end, 1e-3_R);
+}
+
+TEST(hodgkin_huxley, numerics_delta_synapse)
+{
+	DormandPrinceIntegrator integrator(0.1e-3);
+	NullRecorder recorder;
+	AutoController controller;
+
+	auto current_source = make_current_source(
+	    Delta(0.012799981981515884399_V, {50_ms, 60_ms, 70_ms}),
+	    ConstantCurrentSource(-6.5612790756119920843e-09_A));
+
+	size_t spike_count = 0;
+	auto neuron = make_neuron<HodgkinHuxley>(
+	    current_source, [&spike_count](Time) { spike_count++; },
+	    HodgkinHuxleyParameters().cm(1_nF).tau_m(2_ms));
+
+	auto solver = make_solver(neuron, integrator, recorder, controller);
+	solver.solve();
+
+	// The final potential should be around -0.0781225V
+	const Real v_end = solver.s()[0];
+	EXPECT_NEAR(-0.0781225_R, v_end, 1e-3_R);
 }
 }

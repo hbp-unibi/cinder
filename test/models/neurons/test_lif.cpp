@@ -44,7 +44,7 @@ TEST(lif, cur_alpha)
 
 	DormandPrinceIntegrator integrator;
 	NullRecorder recorder;
-	NullController controller;
+	AutoController controller;
 	std::vector<Time> spikes;
 
 	// Create a linear integrate and fire neuron with a current based synapse
@@ -55,7 +55,7 @@ TEST(lif, cur_alpha)
 	                               [&spikes](Time t) { spikes.push_back(t); });
 
 	// Solve the equation
-	make_solver(neuron, integrator, recorder, controller).solve(1_s);
+	make_solver(neuron, integrator, recorder, controller).solve();
 
 	// Make sure the two results are within the range of one millisecond
 	ASSERT_EQ(expected_spikes.size(), spikes.size());
