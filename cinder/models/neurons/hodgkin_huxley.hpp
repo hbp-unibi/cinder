@@ -96,6 +96,11 @@ struct HodgkinHuxleyParameters
 	Voltage v_rest() const { return e_rev_leak(); }
 
 	/**
+	 * Returns the threshold potential above which a spike is triggered.
+	 */
+	Voltage v_thresh() const { return v_offset() + 30_mV; }
+
+	/**
 	 * Returns the current resting potential, alias for the e_rev_leak
 	 * parameter.
 	 */
@@ -140,7 +145,7 @@ private:
 	static Real pow2(Real x) { return x * x; }
 	static Real pow3(Real x) { return pow2(x) * x; }
 	static Real pow4(Real x) { return pow2(pow2(x)); }
-	static Real clamp_unit(Real x) { return std::min(1_R, std::max(0_R, x));}
+	static Real clamp_unit(Real x) { return std::min(1_R, std::max(0_R, x)); }
 
 public:
 	using Base::Base;
@@ -189,15 +194,14 @@ public:
 		const Real dtM = (x.alpha_m - (x.alpha_m + x.beta_m) * m) * 1e3_R;
 		const Real dtH = (x.alpha_h - (x.alpha_h + x.beta_h) * h) * 1e3_R;
 
-		HodgkinHuxleyState res = {{dtV, dtN, dtM, dtH}};
-		return res;
+		return {{dtV, dtN, dtM, dtH}};
 	}
 
 	template <typename State, typename System>
 	void update(Time t, const State &s, const System &)
 	{
-		const Voltage v = Voltage(s[0]) - p().v_offset();
-		if (v >= 30_mV) {
+		const Voltage v = Voltage(s[0]);
+		if (v >= p().v_thresh()) {
 			if (!m_in_refrac && v < m_last_v) {
 				m_in_refrac = true;
 				emit_spike(t);
