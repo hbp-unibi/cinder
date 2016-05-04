@@ -142,6 +142,14 @@ public:
 	 */
 	constexpr double sec() const { return double(t) * TIME_TO_SEC; }
 
+	/**
+	 * Converts the internal integer Time to a floating point time in
+	 * milliseconds.
+	 *
+	 * @return the current time value in milliseconds.
+	 */
+	constexpr double msec() const { return double(t) * TIME_TO_SEC * 1e3; }
+
 	/* Operators */
 
 	friend Time operator+(const Time &t1) { return Time(t1.t); }
