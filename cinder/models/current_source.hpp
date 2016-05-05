@@ -89,7 +89,7 @@ struct ConstantCurrentSourceParameters
     : public VectorBase<ConstantCurrentSourceParameters, Real, 1> {
 	using VectorBase<ConstantCurrentSourceParameters, Real, 1>::VectorBase;
 
-	TYPED_VECTOR_ELEMENT(i, 0, Current);
+	TYPED_VECTOR_ELEMENT(i_offset, 0, Current);
 };
 
 /**
@@ -112,7 +112,7 @@ struct ConstantCurrentSource
 	template <typename State, typename System>
 	Current current(const State &, const System &) const
 	{
-		return p().i();
+		return p().i_offset();
 	}
 };
 
@@ -125,7 +125,7 @@ struct StepCurrentSourceState
     : public VectorBase<StepCurrentSourceState, Real, 1> {
 	using VectorBase<StepCurrentSourceState, Real, 1>::VectorBase;
 
-	TYPED_VECTOR_ELEMENT(i, 0, Current);
+	TYPED_VECTOR_ELEMENT(i_offset, 0, Current);
 };
 
 /**
@@ -144,12 +144,12 @@ struct StepCurrentSourceParameters
 	 */
 	StepCurrentSourceParameters()
 	{
-		i(1_nA);
+		i_offset(0_nA);
 		t_start(0_s);
 		t_end(RealTime(std::numeric_limits<Real>::max()));
 	}
 
-	TYPED_VECTOR_ELEMENT(i, 0, Current);
+	TYPED_VECTOR_ELEMENT(i_offset, 0, Current);
 	TYPED_VECTOR_ELEMENT(t_start, 1, RealTime);
 	TYPED_VECTOR_ELEMENT(t_end, 2, RealTime);
 };
@@ -202,7 +202,7 @@ public:
 	template <typename State, typename System>
 	void handle_discontinuity(Time t, State &s, System &)
 	{
-		s[0] = (t >= m_t_start && t < m_t_end) ? p().i() : 0_A;
+		s[0] = (t >= m_t_start && t < m_t_end) ? p().i_offset() : 0_A;
 	}
 };
 
