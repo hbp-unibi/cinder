@@ -78,6 +78,7 @@ struct HodgkinHuxleyParameters
 	TYPED_VECTOR_ELEMENT(g_leak, 2, Conductance);
 	TYPED_VECTOR_ELEMENT(cm, 3, Capacitance);
 	TYPED_VECTOR_ELEMENT(v_offset, 4, Voltage);
+	TYPED_VECTOR_ELEMENT(v_rest, 5, Voltage);
 	TYPED_VECTOR_ELEMENT(e_rev_leak, 5, Voltage);
 	TYPED_VECTOR_ELEMENT(e_rev_Na, 6, Voltage);
 	TYPED_VECTOR_ELEMENT(e_rev_K, 7, Voltage);
@@ -91,24 +92,9 @@ struct HodgkinHuxleyParameters
 	RealTime tau_m() const { return RealTime(cm().v() / g_leak().v()); }
 
 	/**
-	 * Alias for the e_rev_leak parameter.
-	 */
-	Voltage v_rest() const { return e_rev_leak(); }
-
-	/**
 	 * Returns the threshold potential above which a spike is triggered.
 	 */
 	Voltage v_thresh() const { return v_offset() + 30_mV; }
-
-	/**
-	 * Returns the current resting potential, alias for the e_rev_leak
-	 * parameter.
-	 */
-	HodgkinHuxleyParameters &v_rest(Voltage v)
-	{
-		e_rev_leak(v);
-		return *this;
-	}
 };
 
 /**
