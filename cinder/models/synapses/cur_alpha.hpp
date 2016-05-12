@@ -75,7 +75,7 @@ struct CurAlphaParameters : public VectorBase<CurAlphaParameters, Real, 2> {
 	 */
 	CurAlphaParameters()
 	{
-		w_syn(0.1_nA);
+		w_syn(10_nA);
 		tau_syn(5_ms);
 	}
 

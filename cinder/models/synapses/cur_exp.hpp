@@ -53,7 +53,7 @@ struct CurExpParameters : public VectorBase<CurExpParameters, Real, 2> {
 
 	CurExpParameters()
 	{
-		w_syn(0.1_nA);
+		w_syn(10_nA);
 		tau_syn(5_ms);
 	}
 
