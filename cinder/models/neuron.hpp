@@ -216,7 +216,8 @@ public:
 
 template <typename Membrane, typename CurrentSource>
 auto make_neuron(const CurrentSource &current_source,
-                 const typename Membrane::SpikeCallback &spike_callback,
+                 const typename Membrane::SpikeCallback &spike_callback =
+                     [](Time) {},
                  const typename Membrane::Parameters &params =
                      typename Membrane::Parameters())
 {
