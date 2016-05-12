@@ -88,6 +88,7 @@ struct NullController : public ConstantController<ControllerResult::CONTINUE> {
 class AutoController {
 private:
 	Time m_last_time;
+	Time m_next_dt;
 	std::vector<Real> m_last_state;
 
 public:
@@ -101,11 +102,15 @@ public:
 	{
 		static constexpr Real MAX_ACTIVITY = 1e-3;
 		static constexpr Real MAX_ACTIVITY_REL = 1e-3;
+		static constexpr Time MIN_DT = 0.1_ms;
+		static constexpr Time MAX_DT = 16.0_ms;
+		static constexpr double DT_SCALE = 1.718281828;
 
 		// Calculate the activity of the neuron by numerically calculating the
 		// differential
 		bool tripped = false;
-		if (t - m_last_time > 1_ms) {
+		m_next_dt = std::max(m_next_dt, MAX_DT);
+		if (t - m_last_time > m_next_dt) {
 			if (!m_last_state.empty()) {
 				const Time dt = t - m_last_time;
 				const State ds =
@@ -126,6 +131,12 @@ public:
 			// last_time variables
 			m_last_state.assign(s.begin(), s.end());
 			m_last_time = t;
+
+			// Periodically rescale m_next_dt to avoid aliasing
+			m_next_dt *= DT_SCALE;
+			if (m_next_dt > MAX_DT) {
+				m_next_dt = MIN_DT;
+			}
 		}
 
 		return tripped ? ControllerResult::MAY_CONTINUE
