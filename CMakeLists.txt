@@ -64,6 +64,7 @@ configure_file(cinder/config.h.in cinder/config.h)
 add_library(cinder
 	cinder/common/array_utils
 	cinder/common/fast_math
+	cinder/common/spikes
 	cinder/common/time
 	cinder/common/types
 	cinder/common/vector

@@ -31,6 +31,7 @@
 #define CINDER_HPP
 
 #include <cinder/common/fast_math.hpp>
+#include <cinder/common/spikes.hpp>
 #include <cinder/common/time.hpp>
 #include <cinder/common/types.hpp>
 #include <cinder/common/vector.hpp>
