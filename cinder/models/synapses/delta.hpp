@@ -56,10 +56,10 @@ struct Delta : public SynapseBase<Delta, NullState, DeltaParameters> {
 
 private:
 	template <typename State, typename System>
-	void process_spike(const Spike &spike, Time, State &, System &sys) const
+	void process_spike(const Time &, Time, State &, System &sys) const
 	{
 		// The first system state is supposed to be the membrane voltage
-		sys.s()[0] += p().w_syn() * spike.w;
+		sys.s()[0] += p().w_syn();
 	}
 
 public:
@@ -73,7 +73,7 @@ public:
 	 * @param input_spikes is a list containing the input spike trains.
 	 */
 	Delta(Voltage w_syn,
-	        const std::vector<Spike> &input_spikes = std::vector<Spike>())
+	        const std::vector<Time> &input_spikes = std::vector<Time>())
 	    : Base({{w_syn}}, input_spikes)
 	{
 	}

@@ -32,7 +32,6 @@
 
 #include <queue>
 
-#include <cinder/common/spike.hpp>
 #include <cinder/models/current_source.hpp>
 
 namespace cinder {
@@ -55,7 +54,7 @@ private:
 	 * Priority queue holding the input spikes, with the earliest spikes being
 	 * at the beginnign of the queue.
 	 */
-	std::priority_queue<Spike, std::vector<Spike>, std::greater<Spike>>
+	std::priority_queue<Time, std::vector<Time>, std::greater<Time>>
 	    m_input_spikes;
 
 public:
@@ -74,7 +73,7 @@ public:
 	 * automatically sorted into a priority queue and may be unsorted.
 	 */
 	SynapseBase(const Parameters &params = Parameters(),
-	            const std::vector<Spike> &input_spikes = std::vector<Spike>())
+	            const std::vector<Time> &input_spikes = std::vector<Time>())
 	    : Base(params), m_input_spikes(input_spikes.begin(), input_spikes.end())
 	{
 	}
@@ -95,7 +94,7 @@ public:
 	 */
 	Time next_discontinuity(Time) const
 	{
-		return m_input_spikes.empty() ? MAX_TIME : m_input_spikes.top().t;
+		return m_input_spikes.empty() ? MAX_TIME : m_input_spikes.top();
 	}
 
 	/**
@@ -105,7 +104,7 @@ public:
 	template <typename State2, typename System>
 	void handle_discontinuity(Time t, State2 &s, System &sys)
 	{
-		while (!m_input_spikes.empty() && m_input_spikes.top().t <= t) {
+		while (!m_input_spikes.empty() && m_input_spikes.top() <= t) {
 			static_cast<Impl_ &>(*this)
 			    .process_spike(m_input_spikes.top(), t, s, sys);
 			m_input_spikes.pop();

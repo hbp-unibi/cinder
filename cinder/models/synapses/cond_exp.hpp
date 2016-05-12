@@ -91,9 +91,9 @@ private:
 	 * of the synapse by increasing the first state component.
 	 */
 	template <typename State, typename System>
-	void process_spike(const Spike &spike, Time, State &s, System &) const
+	void process_spike(const Time &, Time, State &s, System &) const
 	{
-		s[0] += p().w_syn() * spike.w;
+		s[0] += p().w_syn();
 	}
 
 public:
@@ -111,7 +111,7 @@ public:
 	 * @param input_spikes is a list containing the input spike trains.
 	 */
 	CondExp(Conductance w_syn, RealTime tau_syn, Voltage e_rev_syn,
-	        const std::vector<Spike> &input_spikes = std::vector<Spike>())
+	        const std::vector<Time> &input_spikes = std::vector<Time>())
 	    : Base({{w_syn, tau_syn, e_rev_syn}}, input_spikes)
 	{
 	}

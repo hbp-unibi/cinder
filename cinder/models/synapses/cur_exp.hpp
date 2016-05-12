@@ -76,9 +76,9 @@ private:
 	Real m_tau_inv;
 
 	template <typename State2, typename System>
-	void process_spike(const Spike &spike, Time, State2 &s, System &) const
+	void process_spike(const Time &, Time, State2 &s, System &) const
 	{
-		s[0] += p().w_syn() * spike.w;
+		s[0] += p().w_syn();
 	}
 
 public:
@@ -93,7 +93,7 @@ public:
 	 * @param input_spikes is a list containing the input spike trains.
 	 */
 	CurExp(Current w_syn, RealTime tau_syn,
-	       const std::vector<Spike> &input_spikes = std::vector<Spike>())
+	       const std::vector<Time> &input_spikes = std::vector<Time>())
 	    : Base({{w_syn, tau_syn}}, input_spikes)
 	{
 	}

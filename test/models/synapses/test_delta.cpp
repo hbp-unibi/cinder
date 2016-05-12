@@ -30,27 +30,27 @@
 namespace cinder {
 namespace {
 
-static const std::vector<Spike> input_spikes = {10_ms, 100_ms, 300_ms};
+static const std::vector<Time> input_spikes = {10_ms, 100_ms, 300_ms};
 using ODE = ODEBase<LIFState>;
 
 struct DeltaTestRecorder {
 	Real calc_expected_voltage(Time t, Voltage pulse_v,
-	                           const std::vector<Spike> &spikes)
+	                           const std::vector<Time> &spikes)
 	{
 		Real res = 0.0;
-		for (const Spike &spike : spikes) {
-			Time t2 = t - spike.t;
+		for (const Time &spike : spikes) {
+			Time t2 = t - spike;
 			if (t2 >= 0_s) {
-				res += pulse_v * spike.w;
+				res += pulse_v;
 			}
 		}
 		return res;
 	}
 
-	bool check_near_discontinuity(Time t, const std::vector<Spike> &spikes)
+	bool check_near_discontinuity(Time t, const std::vector<Time> &spikes)
 	{
-		for (const Spike &spike : spikes) {
-			if (std::abs(t - spike.t) < 1_ms) {
+		for (const Time &spike : spikes) {
+			if (std::abs(t - spike) < 1_ms) {
 				return true;
 			}
 		}

@@ -29,18 +29,18 @@
 namespace cinder {
 namespace {
 
-static const std::vector<Spike> input_spikes1 = {10_ms, 100_ms, 300_ms,
+static const std::vector<Time> input_spikes1 = {10_ms, 100_ms, 300_ms,
                                                  50_ms, 180_ms, 120_ms};
-static const std::vector<Spike> input_spikes2 = {40_ms, 180_ms, 500_ms, 200_ms};
-static const std::vector<Spike> input_spikes3 = {20_ms, 55_ms, 600_ms, 700_ms};
+static const std::vector<Time> input_spikes2 = {40_ms, 180_ms, 500_ms, 200_ms};
+static const std::vector<Time> input_spikes3 = {20_ms, 55_ms, 600_ms, 700_ms};
 
 struct CurAlphaTestRecorder {
 	Real calc_expected_current(Time t, Current cur, Time tau,
-	                           const std::vector<Spike> &spikes)
+	                           const std::vector<Time> &spikes)
 	{
 		Real res = 0.0;
-		for (const Spike &spike : spikes) {
-			Time t2 = t - spike.t;
+		for (const Time &spike : spikes) {
+			Time t2 = t - spike;
 			if (t2 >= 0_s) {
 				res += cur.v() / tau.sec() * t2.sec() *
 				       std::exp(1.0 - t2.sec() / tau.sec());
@@ -49,10 +49,10 @@ struct CurAlphaTestRecorder {
 		return res;
 	}
 
-	bool check_near_discontinuity(Time t, const std::vector<Spike> &spikes)
+	bool check_near_discontinuity(Time t, const std::vector<Time> &spikes)
 	{
-		for (const Spike &spike : spikes) {
-			if (std::abs(t - spike.t) < 1_ms) {
+		for (const Time &spike : spikes) {
+			if (std::abs(t - spike) < 1_ms) {
 				return true;
 			}
 		}
