@@ -614,6 +614,11 @@ public:
 	}
 
 	/**
+	 * Returns the name of the i-th vector element.
+	 */
+	static constexpr const char *name(size_t i) { return names()[i]; }
+
+	/**
 	 * Returns the units of the vector elements.
 	 *
 	 * @return an array of the size of the vector containing the physical unit
@@ -623,6 +628,11 @@ public:
 	{
 		return units(gen_seq<Size>());
 	}
+
+	/**
+	 * Returns the unit of the i-th vector element.
+	 */
+	static constexpr const char *unit(size_t i) { return units()[i]; }
 
 	/**
 	 * Returns the scales of the vector elements. The scale corresponds to the
@@ -635,6 +645,11 @@ public:
 	 * scalue the elements typically should be multiplied with.
 	 */
 	static constexpr Inst scales() { return Inst(scales(gen_seq<Size>())); }
+
+	/**
+	 * Returns the scale of the i-th vector element.
+	 */
+	static constexpr T scale(size_t i) { return scales()[i]; }
 };
 
 /**
