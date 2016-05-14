@@ -203,4 +203,74 @@ static inline std::vector<Time> &normalise_spike_train(
 	}
 	return spike_train;
 }
+
+/**
+ * Generates n input bursts with the given inter-spike-interval and the given
+ * offset and spike jitter.
+ *
+ * @param spike_train is the spike train into which the burst should be
+ * inserted.
+ * @param burst_count is the number of bursts that should be generated.
+ * @param burst_size is the number of spikes in one burst.
+ * @param isi is the inter-spike interval within one burst
+ * @param sigma_spike is the variance of the single spike times.
+ * @param sigma_offs is the variance of the spike onset.
+ * @param t_offs is the offset.
+ * @param random if true, entirely random bursts are generated, otherwise a
+ * representative burst is created.
+ * @param seed if -1 a random seed is chosen, otherwise the given seed is used.
+ */
+static inline std::vector<Time> &generate_bursts(
+    std::vector<Time> &spike_train, size_t burst_count, size_t burst_size,
+    Time isi, Time sigma_spike, Time sigma_offs = 0_s, Time t_offs = 0_s,
+    bool random = true, int seed = -1)
+{
+	// Calculate the deltaT for equidistant distribution
+	const Time delta_t_eqn = Time(2 * (sigma_spike.t + sigma_offs.t) /
+	                              std::max<size_t>(1, burst_count));
+
+	// Random number generator
+	std::default_random_engine gen(seed == -1 ? std::random_device()() : seed);
+	std::normal_distribution<double> dist_spike(0.0, sigma_spike.sec());
+	std::normal_distribution<double> dist_offs(0.0, sigma_offs.sec());
+
+	// Iterate over all bursts and assemble the spikes
+	for (size_t i = 0; i < burst_count; i++) {
+		const Time offs = t_offs + (random ? Time::sec(dist_offs(gen)) : 0_s);
+		for (size_t j = 0; j < burst_size; j++) {
+			const Time t = Time(offs.t + isi.t * j);
+			spike_train.emplace_back(t + (random
+			                                  ? Time::sec(dist_spike(gen))
+			                                  : Time(delta_t_eqn.t * (i + j))));
+		}
+	}
+	return spike_train;
+}
+
+/**
+ * Generates n input bursts with the given inter-spike-interval and the given
+ * offset and spike jitter and returns them.
+ *
+ * @param spike_train is the spike train into which the burst should be
+ * inserted.
+ * @param burst_count is the number of bursts that should be generated.
+ * @param burst_size is the number of spikes in one burst.
+ * @param isi is the inter-spike interval within one burst
+ * @param sigma_spike is the variance of the single spike times.
+ * @param sigma_offs is the variance of the spike onset.
+ * @param t_offs is the offset.
+ * @param random if true, entirely random bursts are generated, otherwise a
+ * representative burst is created.
+ * @param seed if -1 a random seed is chosen, otherwise the given seed is used.
+ * @return the generated spike train
+ */
+static inline std::vector<Time> generate_bursts(
+    size_t burst_count, size_t burst_size, Time isi, Time sigma_spike,
+    Time sigma_offs = 0_s, Time t_offs = 0_s, bool random = true, int seed = -1)
+{
+	std::vector<Time> spike_train;
+	generate_bursts(spike_train, burst_count, burst_size, isi, sigma_spike,
+	                sigma_offs, t_offs, random, seed);
+	return spike_train;
+}
 }
