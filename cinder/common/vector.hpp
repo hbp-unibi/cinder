@@ -553,9 +553,9 @@ public:
 	constexpr std::array<T, Size> as_array() const { return m_arr; }
 
 	/**
-	 * Default constructor. Default-initializes all vector elements.
+	 * Default constructor. Value-initializes all vector elements.
 	 */
-	constexpr VectorBase() {}
+	constexpr VectorBase() : m_arr({}) {}
 
 	/**
 	 * Constructor which allows to initialize the vector with an array
