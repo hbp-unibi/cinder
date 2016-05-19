@@ -263,7 +263,7 @@ private:
 	/**
 	 * Evaluates the function
 	 *     exp(x)
-	 * in a numerically save way, preventing overflows.
+	 * in a numerically safe way, preventing overflows.
 	 */
 	static Real exp_x(Real x)
 	{
@@ -274,7 +274,7 @@ private:
 	/**
 	 * Evaluates the function
 	 *    1 / (exp(x / a) + 1)
-	 * in a numerically save way, preventing overflow.
+	 * in a numerically safe way, preventing overflow.
 	 */
 	static Real div_exp_x_div_a_p_1(Real x, Real a)
 	{
