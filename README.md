@@ -130,6 +130,7 @@ differential equation integrator.
 * _LIF_: Linear Integrate and Fire
 * _AdEx_: Exponential Integrate and Fire Neuron with adaptive threshold
 * _Izhikevich_: Quadratic Integrate and Fire Neuron
+* _HodgkinHuxley_: Hodgkin-Huxley type model with Traub channel dynamics (same model as implemented in NEST as `hh_cond_exp_traub`)
 
 New neuron models can be easily implemented by simply defining the parameter and
 state vector and the corresponding differential equation. More neuron models
