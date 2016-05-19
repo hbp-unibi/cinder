@@ -34,9 +34,11 @@
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
+#include <exception>
 #include <initializer_list>
 #include <iostream>
 #include <string>
+
 #include <type_traits>
 #include <tuple>
 
@@ -547,6 +549,7 @@ protected:
 	};
 
 public:
+	using VectorMixin<VectorBase<Inst_, T, Size>, Inst_, T, Size>::operator[];
 	using Self = VectorBase<Inst_, T, Size>;
 	using Inst = Inst_;
 
@@ -562,6 +565,20 @@ public:
 	 * containing the vector elements.
 	 */
 	constexpr VectorBase(const std::array<T, Size> &arr) : m_arr(arr) {}
+
+	/**
+	 * Allow element access by name.
+	 */
+	T &operator[](const std::string &s)
+	{
+		for (size_t i = 0; i < Size; i++) {
+			if (s == std::string(name(i))) {
+				return m_arr[i];
+			}
+		}
+		throw std::invalid_argument(std::string("Unkown vector element \"") +
+		                            s + "\"!");
+	}
 
 	/**
 	 * Internal method returning information about the I-th vector element. Do
