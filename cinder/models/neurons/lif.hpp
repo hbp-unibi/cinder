@@ -19,7 +19,20 @@
 /**
  * @file lif.hpp
  *
- * Implementation of the simple linear integrate and fire neuron model.
+ * Implementation of the simple linear integrate-and-fire neuron model, see for
+ * example chapter one of
+ *
+ * Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition
+ * Wulfram Gerstner, Werner M. Kistler, Richard Naud, Liam Paninski
+ * Cambridge University Press, 2014
+ *
+ * http://neuronaldynamics.epfl.ch/online/Ch1.S3.html
+ *
+ * or alternatively chapter eight of
+ *
+ * Dynamical Systems in Neuroscience: The Geometry of Excitability and Bursting
+ * Eugene M. Izhikevich
+ * The MIT Press, 2007
  *
  * @author Andreas Stöckel
  */
@@ -34,6 +47,7 @@
 namespace cinder {
 /**
  * The LIFState class is the state vector which represents the state of the
+ * LIF membrane. Contains a single element, namely the membrane voltage of the
  * LIF membrane.
  */
 struct LIFState : public VectorBase<LIFState, Real, 1> {
@@ -81,6 +95,11 @@ struct LIFParameters : public VectorBase<LIFParameters, Real, 7> {
 	RealTime tau_m() const { return RealTime(cm().v() / g_leak().v()); }
 };
 
+/**
+ * Class implementing the classical linear integrate-and-fire model. This class
+ * is derived from the "SpikingMembraneBase" class which implements the
+ * production of output spikes, the reset behaviour and refractoriness.
+ */
 class LIF : public SpikingMembraneBase<LIF, LIFState, LIFParameters, true> {
 private:
 	using Base = SpikingMembraneBase<LIF, LIFState, LIFParameters, true>;
@@ -90,11 +109,20 @@ public:
 	using Base::in_refrac;
 	using Base::p;
 
+	/**
+	 * Calculates the voltage differential for the LIF membrane given the
+	 * current state and an external current.
+	 *
+	 * @param s is the current neuron state.
+	 * @param sys is a reference at the global system state, allowing to access
+	 * the current that is being injected into the neuron.
+	 * @return a LIFState vector containing the time-differential of the state.
+	 */
 	template <typename State, typename System>
 	LIFState df(const State &s, const System &sys) const
 	{
 		if (in_refrac()) {
-			return LIFState();
+			return LIFState();  // If in refractory period, return a zero-vector
 		}
 		const Current i_syn{sys.ode().current(s, sys)};
 		const Current i_rest{(p().v_rest() - s[0]) * p().g_leak()};
