@@ -241,7 +241,7 @@ static inline std::vector<Time> &generate_bursts(
 			const Time t = Time(offs.t + isi.t * j);
 			spike_train.emplace_back(t + (random
 			                                  ? Time::sec(dist_spike(gen))
-			                                  : Time(delta_t_eqn.t * (i + j))));
+			                                  : Time(delta_t_eqn.t * i)));
 		}
 	}
 	return spike_train;
