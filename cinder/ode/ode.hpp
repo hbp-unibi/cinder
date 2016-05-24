@@ -168,16 +168,16 @@ private:
 	template <size_t I>
 	void set_params_impl(
 	    const Parameters &,
-	    typename std::enable_if<(I >= sizeof...(T))>::type * = 0) const
+	    typename std::enable_if<(I >= sizeof...(T))>::type * = 0)
 	{
 	}
 
 	template <size_t I>
 	void set_params_impl(
 	    const Parameters &params,
-	    typename std::enable_if<(I < sizeof...(T))>::type * = 0) const
+	    typename std::enable_if<(I < sizeof...(T))>::type * = 0)
 	{
-		get<I>().params(params.template get<I>());
+		get<I>().p(params.template get<I>());
 		set_params_impl<I + 1>(params);
 	}
 
