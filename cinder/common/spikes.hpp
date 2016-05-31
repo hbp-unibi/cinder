@@ -282,8 +282,9 @@ static inline std::vector<Time> &generate_bursts(
     bool random = true, int seed = -1)
 {
 	// Calculate the deltaT for equidistant distribution
-	const Time delta_t_eqn = Time(2 * (sigma_spike.t + sigma_offs.t) /
-	                              std::max<size_t>(1, burst_count));
+	const Time delta_t_eqn =
+	    Time(2.0 * std::hypot(sigma_spike.t, sigma_offs.t) /
+	         std::max<size_t>(1, burst_count));
 
 	// Random number generator
 	std::default_random_engine gen(seed == -1 ? std::random_device()() : seed);
@@ -295,9 +296,8 @@ static inline std::vector<Time> &generate_bursts(
 		const Time offs = t_offs + (random ? Time::sec(dist_offs(gen)) : 0_s);
 		for (size_t j = 0; j < burst_size; j++) {
 			const Time t = Time(offs.t + isi.t * j);
-			spike_train.emplace_back(t + (random
-			                                  ? Time::sec(dist_spike(gen))
-			                                  : Time(delta_t_eqn.t * i)));
+			spike_train.emplace_back(t + (random ? Time::sec(dist_spike(gen))
+			                                     : Time(delta_t_eqn.t * i)));
 		}
 	}
 	return spike_train;
