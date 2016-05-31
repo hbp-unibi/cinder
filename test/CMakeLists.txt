@@ -24,6 +24,7 @@ include_directories(
 )
 
 add_executable(test_cinder
+	common/test_spikes
 	common/test_vector
 	models/test_current_source
 	models/neurons/test_adex
