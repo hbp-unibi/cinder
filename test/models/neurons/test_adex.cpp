@@ -51,8 +51,9 @@ TEST(adex, cond_exp)
 	auto current_source = make_current_source(
 	    CondExp(0.1_uS, 10_ms, 0_V, {10_ms, 30_ms, 40_ms, 50_ms, 100_ms, 200_ms,
 	                                 202_ms, 204_ms, 206_ms, 208_ms}));
-	auto neuron = make_neuron<AdEx>(current_source,
-	                                [&spikes](Time t) { spikes.push_back(t); });
+	auto neuron = make_neuron<AdEx>(current_source, [&spikes](Time t) {
+		spikes.push_back(t);
+	}, AdEx::Parameters().v_reset(-70.6_mV).v_spike(-40.0_mV));
 
 	// Solve the equation
 	make_solver(neuron, integrator, recorder, controller).solve();

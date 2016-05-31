@@ -61,8 +61,8 @@ struct AdExParameters : public VectorBase<AdExParameters, Real, 11> {
 		tau_m(9.3667_ms);
 		v_thresh(-50.4_mV);
 		v_rest(-70.6_mV);
-		v_reset(-70.6_mV);
-		v_spike(-40.0_mV);
+		v_reset(-60.0_mV);
+		v_spike(0.0_mV);
 		tau_refrac(0.1_ms);
 		delta_T(2.0_mV);
 		a(4.0_nS);
