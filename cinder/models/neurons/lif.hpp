@@ -104,10 +104,27 @@ class LIF : public SpikingMembraneBase<LIF, LIFState, LIFParameters, true> {
 private:
 	using Base = SpikingMembraneBase<LIF, LIFState, LIFParameters, true>;
 
+	/**
+	 * Inverse of the membrane capacitance -- calculated in the init function in
+	 * order to keep the costly division out of the df() method.
+	 */
+	Real m_cm_inv;
+
 public:
 	using Base::Base;
 	using Base::in_refrac;
 	using Base::p;
+
+	/**
+	 * Called just before the simulation is started. Calculates the inverse of
+	 * the membrane capacitance in order to keep the costly division out of the
+	 * df() method.
+	 */
+	template <typename State, typename System>
+	void init(Time, const State &, const System &)
+	{
+		m_cm_inv = 1.0_R / p().cm();
+	}
 
 	/**
 	 * Calculates the voltage differential for the LIF membrane given the
@@ -126,7 +143,7 @@ public:
 		}
 		const Current i_syn{sys.ode().current(s, sys)};
 		const Current i_rest{(p().v_rest() - s[0]) * p().g_leak()};
-		return LIFState({(i_rest + i_syn) / p().cm()});
+		return LIFState({(i_rest + i_syn) * m_cm_inv});
 	}
 };
 }
