@@ -155,22 +155,24 @@ public:
  * using a lambda expression.
  *
  * @tparam F is the type of the lambda expression.
- * @tparam DefaultResult is the result that should be returned when the lambda
- * returns true.
  */
-template <typename F,
-          ControllerResult DefaultResult = ControllerResult::MAY_CONTINUE>
+template <typename F>
 struct ConditionedController {
 private:
 	F m_f;
+	ControllerResult m_default_result;
 
 public:
-	ConditionedController(F f) : m_f(std::move(f)) {}
+	ConditionedController(
+	    F f, ControllerResult default_result = ControllerResult::CONTINUE)
+	    : m_f(std::move(f)), m_default_result(default_result)
+	{
+	}
 	template <typename State, typename System>
 	ControllerResult control(Time, const State &, const System &)
 	{
 		if (m_f()) {
-			return DefaultResult;
+			return m_default_result;
 		}
 		return ControllerResult::ABORT;
 	}
@@ -179,12 +181,11 @@ public:
 /**
  * Creates a new ConditionedController instance.
  */
-template <typename F,
-          ControllerResult DefaultResult = ControllerResult::MAY_CONTINUE>
-static ConditionedController<F, DefaultResult> make_conditioned_controller(
-    const F &f)
+template <typename F>
+static ConditionedController<F> make_conditioned_controller(
+    const F &f, ControllerResult default_result = ControllerResult::CONTINUE)
 {
-	return ConditionedController<F, DefaultResult>(f);
+	return ConditionedController<F>(f, default_result);
 }
 
 /**
@@ -266,10 +267,11 @@ struct ConditionedAutoController
 	ConditionedController<F> conditioned_controller;
 	AutoController auto_controller;
 
-	ConditionedAutoController(F f)
+	ConditionedAutoController(
+	    F f, ControllerResult default_result = ControllerResult::MAY_CONTINUE)
 	    : MultiController<ConditionedController<F>, AutoController>(
 	          conditioned_controller, auto_controller),
-	      conditioned_controller(f)
+	      conditioned_controller(f, default_result)
 	{
 	}
 };
@@ -281,9 +283,10 @@ struct ConditionedAutoController
  * @param f is the function describing the abort condition.
  */
 template <typename F>
-ConditionedAutoController<F> make_conditioned_auto_controller(F f)
+ConditionedAutoController<F> make_conditioned_auto_controller(
+    F f, ControllerResult default_result = ControllerResult::MAY_CONTINUE)
 {
-	return ConditionedAutoController<F>(f);
+	return ConditionedAutoController<F>(f, default_result);
 }
 }
 
