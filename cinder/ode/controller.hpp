@@ -106,13 +106,19 @@ public:
 		static constexpr Time MAX_DT = 16.0_ms;
 		static constexpr double DT_SCALE = 1.718281828;
 
+		// Current time delta
+		const Time dt = t - m_last_time;
+
+		// Minimum time delta to pass until the next sampling point
+		m_next_dt = std::max(m_next_dt, MAX_DT);
+
+		// The controller has not scheduled cancelation of the simulation
+		bool tripped = false;
+
 		// Calculate the activity of the neuron by numerically calculating the
 		// differential
-		bool tripped = false;
-		m_next_dt = std::max(m_next_dt, MAX_DT);
-		if (t - m_last_time > m_next_dt) {
+		if (dt > m_next_dt) {
 			if (!m_last_state.empty()) {
-				const Time dt = t - m_last_time;
 				const State ds =
 				    (s - VectorView<Real, State::Size>(m_last_state.data())) *
 				    State::scales() / dt.sec();
