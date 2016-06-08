@@ -53,7 +53,7 @@ struct NullRecorder {
 	 * call to this method an do nothing.
 	 */
 	template <typename State, typename System>
-	static void record(Time, const State &, const System &)
+	static void record(Time, const State &, const System &, bool = false)
 	{
 		// Do nothing here
 	}
@@ -104,7 +104,7 @@ public:
 	 * output.
 	 */
 	template <typename State, typename System>
-	void record(Time t, const State &s, const System &)
+	void record(Time t, const State &s, const System &, bool force = false)
 	{
 		// In case record is called multiple times in a row with the same
 		// timestamp, just increment t by one granule and continue. Otherwise,
@@ -112,7 +112,7 @@ public:
 		if (m_last_time >= t) {
 			t = m_last_time + Time(1);
 		}
-		else if (m_last_time + m_min_delta > t) {
+		if (m_last_time + m_min_delta > t && !force) {
 			return;
 		}
 		m_os << t << ", " << s << '\n';
@@ -137,7 +137,7 @@ struct MaximumMembranePotentialRecorder {
 	 * potential. If yes, updates the locally stored maximum time and voltage.
 	 */
 	template <typename State, typename System>
-	void record(Time t, const State &s, const System &sys)
+	void record(Time t, const State &s, const System &sys, bool)
 	{
 		const Voltage u = sys.ode().voltage(s, sys);
 		if (u > u_max) {
@@ -170,10 +170,10 @@ public:
 	}
 
 	template <typename State, typename System>
-	void record(Time t, const State &s, const System &sys)
+	void record(Time t, const State &s, const System &sys, bool force)
 	{
 		recorder.record(t, s, sys);
-		MultiRecorder<Recorders...>::record(t, s, sys);
+		MultiRecorder<Recorders...>::record(t, s, sys, force);
 	}
 };
 

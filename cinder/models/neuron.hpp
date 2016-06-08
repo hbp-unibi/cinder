@@ -156,7 +156,7 @@ public:
 			if (ArtificialSpike_) {
 				s[0] = p().v_spike();
 			}
-			sys.recorder().record(t, sys.s(), sys);
+			sys.recorder().record(t, sys.s(), sys, true);
 
 			// Set the membrane potential to the reset potential
 			s[0] = p().v_reset();
