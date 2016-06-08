@@ -473,6 +473,15 @@ public:
 };
 
 /**
+ * Small template type used for accessing element-specific information by
+ * the mechanism of function overloads.
+ */
+template <size_t I_>
+struct VectorInfoAccessor {
+	static constexpr size_t I = I_;
+};
+
+/**
  * Base class for custom fixed-size vector types. In contrast to VectorMixin and
  * VectorView this class provides its own storage space. Derive from this class
  * to provide a specialised vector class with its own member functions.
@@ -538,16 +547,6 @@ private:
 		return {{info<Is>().scale...}};
 	}
 
-protected:
-	/**
-	 * Small template type used for accessing element-specific information by
-	 * the mechanism of function overloads.
-	 */
-	template <size_t I_>
-	struct InfoAccessor {
-		static constexpr size_t I = I_;
-	};
-
 public:
 	using VectorMixin<VectorBase<Inst_, T, Size>, Inst_, T, Size>::operator[];
 	using Self = VectorBase<Inst_, T, Size>;
@@ -605,7 +604,7 @@ public:
 	template <size_t I>
 	static constexpr VectorElementInfo info()
 	{
-		return Inst::element_info(InfoAccessor<I>());
+		return Inst::element_info(VectorInfoAccessor<I>());
 	}
 
 	/**
@@ -930,7 +929,7 @@ public:
 
 #define NAMED_VECTOR_ELEMENT(NAME, IDX)                                \
 	static constexpr size_t idx_##NAME = IDX;                          \
-	static constexpr VectorElementInfo element_info(InfoAccessor<IDX>) \
+	static constexpr VectorElementInfo element_info(VectorInfoAccessor<IDX>) \
 	{                                                                  \
 		return VectorElementInfo(#NAME);                               \
 	}                                                                  \
@@ -944,7 +943,7 @@ public:
 
 #define TYPED_VECTOR_ELEMENT(NAME, IDX, TYPE)                          \
 	static constexpr size_t idx_##NAME = IDX;                          \
-	static constexpr VectorElementInfo element_info(InfoAccessor<IDX>) \
+	static constexpr VectorElementInfo element_info(VectorInfoAccessor<IDX>) \
 	{                                                                  \
 		return VectorElementInfo(#NAME, TYPE::unit(), TYPE::scale());  \
 	}                                                                  \
