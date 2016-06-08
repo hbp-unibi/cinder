@@ -31,6 +31,7 @@ add_executable(test_cinder
 	models/neurons/test_hodgkin_huxley
 	models/neurons/test_izhikevich
 	models/neurons/test_lif
+	models/neurons/test_mat
 	models/synapses/test_cur_alpha
 	models/synapses/test_cur_exp
 	models/synapses/test_delta

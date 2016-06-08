@@ -42,6 +42,7 @@
 #include <cinder/models/neurons/hodgkin_huxley.hpp>
 #include <cinder/models/neurons/izhikevich.hpp>
 #include <cinder/models/neurons/lif.hpp>
+#include <cinder/models/neurons/mat.hpp>
 #include <cinder/models/synapses/cond_alpha.hpp>
 #include <cinder/models/synapses/cond_exp.hpp>
 #include <cinder/models/synapses/cur_alpha.hpp>
