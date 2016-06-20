@@ -36,6 +36,7 @@
 #include <cinder/common/types.hpp>
 #include <cinder/common/vector.hpp>
 #include <cinder/models/current_source.hpp>
+#include <cinder/models/noise_source.hpp>
 #include <cinder/models/neuron.hpp>
 #include <cinder/models/synapse.hpp>
 #include <cinder/models/neurons/adex.hpp>

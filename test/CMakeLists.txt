@@ -18,15 +18,13 @@
 cmake_minimum_required(VERSION 3.2)
 project(cinder)
 
-include_directories(
-	PRIVATE
-		${GTEST_INCLUDE_DIRS}
-)
+include_directories(PRIVATE ${GTEST_INCLUDE_DIRS})
 
 add_executable(test_cinder
 	common/test_spikes
 	common/test_vector
 	models/test_current_source
+	models/test_noise_source
 	models/neurons/test_adex
 	models/neurons/test_hodgkin_huxley
 	models/neurons/test_izhikevich

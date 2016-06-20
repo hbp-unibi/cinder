@@ -70,6 +70,7 @@ add_library(cinder
 	cinder/common/vector
 	cinder/models/current_source
 	cinder/models/neuron
+	cinder/models/noise_source
 	cinder/models/synapse
 	cinder/models/neurons/adex
 	cinder/models/neurons/hodgkin_huxley
