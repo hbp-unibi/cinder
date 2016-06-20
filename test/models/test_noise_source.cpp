@@ -53,7 +53,7 @@ static void test_gaussian_noise_current_source()
 	// Make sure the average is close to zero
 	double avg = std::accumulate(recorder.is.begin(), recorder.is.end(), 0.0) /
 	             double(recorder.is.size());
-	EXPECT_NEAR(0.0, avg, 1e-4);
+	EXPECT_NEAR(0.0, avg, 1e-3);
 }
 }
 
