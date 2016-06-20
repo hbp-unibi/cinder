@@ -235,9 +235,9 @@ private:
 	static Real x_div_exp_x_div_a_m_1(Real x, Real a)
 	{
 		constexpr Real MAX_EXP = 16.0_R;
-		constexpr Real c1 = 0.5_R; // 1/2
-		constexpr Real c2 = 0.08333333333_R; // 1/12
-		constexpr Real c3 = 0.001388888889_R; // 1/720
+		constexpr Real c1 = 0.5_R;             // 1/2
+		constexpr Real c2 = 0.08333333333_R;   // 1/12
+		constexpr Real c3 = 0.001388888889_R;  // 1/720
 
 		// For large values, just return zero
 		if (x > MAX_EXP * a) {
@@ -285,7 +285,7 @@ private:
 			return 0.0_R;
 		}
 
-		return 1._R / (fast::exp(x/a) + 1._R);
+		return 1._R / (fast::exp(x / a) + 1._R);
 	}
 
 public:
@@ -294,10 +294,7 @@ public:
 		return 0.032_R * x_div_exp_x_div_a_m_1(15._R - V, 5._R);
 	}
 
-	static Real beta_n(Real V)
-	{
-		return 0.5_R * exp_x((10._R - V) / 40._R);
-	}
+	static Real beta_n(Real V) { return 0.5_R * exp_x((10._R - V) / 40._R); }
 
 	static Real alpha_m(Real V)
 	{
@@ -309,10 +306,7 @@ public:
 		return 0.28_R * x_div_exp_x_div_a_m_1(V - 40._R, 5._R);
 	}
 
-	static Real alpha_h(Real V)
-	{
-		return 0.128_R * exp_x((17._R - V) / 18._R);
-	}
+	static Real alpha_h(Real V) { return 0.128_R * exp_x((17._R - V) / 18._R); }
 
 	static Real beta_h(Real V)
 	{
