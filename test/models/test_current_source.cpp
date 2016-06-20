@@ -31,7 +31,7 @@ namespace cinder {
 namespace {
 struct NullCurrentTestRecorder {
 	template <typename State, typename System>
-	static void record(Time, const State &s, const System &sys)
+	static void record(Time, const State &s, const System &sys, bool)
 	{
 		EXPECT_EQ(0.0, sys.ode().current(s, sys));
 	}
@@ -39,7 +39,7 @@ struct NullCurrentTestRecorder {
 
 struct ConstantCurrentTestRecorder {
 	template <typename State, typename System>
-	static void record(Time, const State &s, const System &sys)
+	static void record(Time, const State &s, const System &sys, bool)
 	{
 		EXPECT_NEAR(10e-3, sys.ode().current(s, sys), 1e-6);
 	}
@@ -47,7 +47,7 @@ struct ConstantCurrentTestRecorder {
 
 struct StepCurrentTestRecorder {
 	template <typename State, typename System>
-	static void record(Time t, const State &s, const System &sys)
+	static void record(Time t, const State &s, const System &sys, bool)
 	{
 		if (std::abs(t - 100_ms) > 0.1_ms && std::abs(t - 900_ms) > 0.1_ms) {
 			EXPECT_NEAR((t > 100_ms && t < 900_ms) ? 10e-3 : 0.0,
@@ -58,7 +58,7 @@ struct StepCurrentTestRecorder {
 
 struct MultiCurrentTestRecorder {
 	template <typename State, typename System>
-	static void record(Time t, const State &s, const System &sys)
+	static void record(Time t, const State &s, const System &sys, bool)
 	{
 		if (std::abs(t - 100_ms) > 0.1_ms && std::abs(t - 900_ms) > 0.1_ms) {
 			EXPECT_NEAR((t > 100_ms && t < 900_ms) ? 10e-3 : -10e-3,

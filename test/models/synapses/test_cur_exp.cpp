@@ -59,7 +59,7 @@ struct CurExpTestRecorder {
 	}
 
 	template <typename State, typename System>
-	void record(Time t, const State &s, const System &sys)
+	void record(Time t, const State &s, const System &sys, bool)
 	{
 		Real expected_current = 0.0;
 		expected_current +=

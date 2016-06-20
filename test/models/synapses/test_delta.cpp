@@ -58,7 +58,7 @@ struct DeltaTestRecorder {
 	}
 
 	template <typename State, typename System>
-	void record(Time t, const State &s, const System &)
+	void record(Time t, const State &s, const System &, bool)
 	{
 		Real expected_current = 0.0;
 		expected_current +=

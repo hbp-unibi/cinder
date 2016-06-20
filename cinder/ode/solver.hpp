@@ -165,7 +165,7 @@ public:
 				// Record the updated state
 				recorder.record(const_cast<const Time &>(t),
 				                const_cast<const State &>(s),
-				                const_cast<const System &>(m_sys));
+				                const_cast<const System &>(m_sys), false);
 			}
 
 			// Once the discontinuity is reached, call the ODE update function,
@@ -176,7 +176,7 @@ public:
 				t += Time(1);  // Advance by the smallest possible time-step
 				recorder.record(const_cast<const Time &>(t),
 				                const_cast<const State &>(s),
-				                const_cast<const System &>(m_sys));
+				                const_cast<const System &>(m_sys), false);
 			}
 
 			// Ask the controller whether it is time to abort

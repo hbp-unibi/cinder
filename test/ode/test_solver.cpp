@@ -80,7 +80,7 @@ struct SawtoothODE {
 
 struct SawtoothTestRecorder {
 	template <typename State, typename System>
-	static void record(Time t, const State &s, const System &)
+	static void record(Time t, const State &s, const System &, bool)
 	{
 		const Real interval = 10e-3;
 		const int i = std::ceil((t + Time(1)).sec() / interval);
