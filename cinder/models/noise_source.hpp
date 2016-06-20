@@ -93,13 +93,32 @@ public:
 	using Base::Base;
 
 	/**
+	 * Constructor which allows to conveniently generate a GaussianNoiseSource
+	 * instance.
+	 */
+	GaussianNoiseSource(Current i_stddev, RealTime t_delta = 1_ms,
+	                    Real seed = 156484.0)
+	    : Base({{i_stddev, t_delta, seed}})
+	{
+	}
+
+	/**
 	 * Initializes the internal random number generator.
 	 */
 	template <typename State, typename System>
 	void init(Time t, const State &, const System &)
 	{
+		// Initialize the random generator
 		m_gen.seed(p().seed());
-		m_next_t = t;
+
+		// In case a non-zero standard deviation is given, set the next
+		// discontinuity to now. Otherwise effectively deactivate this current
+		// source by setting m_max_t to MAX_TIME.
+		if (p().i_stddev() > 0_A) {
+			m_next_t = t;
+		} else {
+			m_next_t = MAX_TIME;
+		}
 	}
 
 	/**
