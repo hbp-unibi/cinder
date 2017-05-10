@@ -6,7 +6,7 @@ allowing to analyse their behaviour, e.g. under changing parameters or varying
 input. Cinder is designed for expandability. Adding new membrane or synapse
 models is mainly a matter of writing down their differential equation in C++.
 
-[![Build Status](https://travis-ci.org/hbp-sanncs/cinder.svg?branch=master)](https://travis-ci.org/hbp-sanncs/cinder)
+[![Build Status](https://travis-ci.org/hbp-unibi/cinder.svg?branch=master)](https://travis-ci.org/hbp-unibi/cinder)
 
 ## Motivation
 
